@@ -1,8 +1,10 @@
-# Exaltavit — Static Concert Site
+# Exaltavit — Concert-first static site
 
-One-page campaign site for **Exaltavit**, a free choral concert by **Avant Garde Singers** on **October 17, 2026** at the **National Shrine and Parish of Our Lady of Aranzazu, San Mateo, Rizal**.
+One-page campaign for **Exaltavit**, a free choral concert by **Avant Garde Singers** on **October 17, 2026** at the **National Shrine and Parish of Our Lady of Aranzazu, San Mateo, Rizal**.
 
-Stack: **Vite + React + TypeScript + Tailwind**. Fully static. No database, auth, or third-party forms/payments. Donations, merch pre-orders, RSVPs, and sponsorships use **mailto** plus **copy-to-clipboard**.
+Stack: **Vite + React + TypeScript + Tailwind**. Fully static. No database, auth, or payment processors. Gifts, keepsake orders, RSVPs, and partnerships use **mailto** with **Open email draft** / **Copy message**.
+
+Live: [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/)
 
 ## Run locally
 
@@ -18,62 +20,54 @@ npm run build
 npm run preview
 ```
 
-## Deploy
+## Page order
 
-Production: [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/)
+1. Concert invitation (hero)
+2. Dedication to Nuestra Señora de Aranzazu
+3. Performance preview (hidden until video URLs are set)
+4. The Voices of Exaltavit
+5. The Repertoire
+6. Exaltavit keepsakes
+7. Patronage and partnerships
+8. Plan your visit
+9. Acknowledgments / FAQ footer
 
-Build output is `dist/`. Netlify builds with `npm run build` and publishes `dist/` (see `netlify.toml`). You can also deploy that folder to Vercel, GitHub Pages, or any static host.
-
-Optional public share URL (used by “Copy page link”). Set in Netlify env or local `.env` — **no trailing slash**:
-
-```bash
-# .env (optional)
-VITE_SITE_URL=https://exaltavit.netlify.app
-```
-
-## Configure content
+## Configure
 
 Edit `src/config/event.ts`:
 
 | Field | Purpose |
 | --- | --- |
-| `organizerEmail` | Inbox for all mailto flows (replace `@example.com` before launch) |
-| `timeLabel` | Concert time; leave `null` for “Time to be announced” |
-| `gcash.*` | Account name, number, QR path — **all three required** or GCash UI stays disabled |
-| `mapUrl` | Directions link under Plan your visit |
-| `products` / `preorderEnabled` | Merch catalog and whether checkout is offered |
-| `sizeChartReady` | Flip to `true` when a size guide is published |
-| `pickupCopy` | Fulfillment instructions shown at checkout |
-| `budget.goalPhp` / `raisedPhp` | Optional static progress; both required to show totals |
+| `organizerEmail` / `privacyContact` | Inbox (currently `avantgardesingers@gmail.com` from FB About) |
+| `dedication` | Marian dedication copy |
+| `repertoire[]` | Approved titles; leave `composer` blank until supplied |
+| `voices[]` | Roster with `slug` for `#voice-{slug}` anchors — no invented names |
+| `previewVideos[]` | Click-to-play URLs; section hidden when empty |
+| `media.hero` / `ensemble` / `patroness` | Photo slots; labeled placeholders until `src` is set |
+| `gcash.*` | All three required or GCash panel stays quiet |
+| `mapUrl` / `timeLabel` | Directions and concert time |
+| `products` | Keepsakes; `featured` for shirt/tote row |
 | `thankYouList` | Opt-in public names only |
-| `choirIntro` | Meet-the-choir copy |
 
-Feature gates are **derived from filled fields**, not a single “enable” checkbox.
+Unfinished config is **hidden from visitors** (no “not configured” essays). Details for organizers stay in this README and the delivery note.
 
-## Organizer inbox checklist
+Optional share URL (no trailing slash):
 
-1. Replace `organizerEmail` / `privacyContact` with the real AGS inbox.
-2. Fill GCash name, number, and add a QR image under `public/` before promoting donations.
-3. Publish concert **time** (`timeLabel`) when confirmed.
-4. Add `mapUrl` for directions.
-5. Confirm merch **pickup** details and size chart; set `sizeChartReady` accordingly.
-6. Watch inbox for subjects prefixed `[Exaltavit Gift]`, `[Exaltavit Merch]`, `[Exaltavit RSVP]`, `[Exaltavit Sponsor]` — match on the **Record ID**.
-7. Reply to confirm payment/pickup offline; the site never verifies transfers.
-8. Add thank-you names only when donors opted in.
-9. Set `VITE_SITE_URL` on deploy for reliable share links.
-10. Keep Facebook page linked: https://www.facebook.com/AGSingers
+```bash
+VITE_SITE_URL=https://exaltavit.netlify.app
+```
 
-## Placeholders / launch blockers
+## Organizer checklist
 
-- Organizer email is still a placeholder (`@example.com`).
-- GCash transfer panel is intentionally disabled until all three fields are filled.
-- Concert time is TBA.
-- Map / directions link empty.
-- Size chart not ready; pickup copy is provisional.
-- Meet-the-choir bio is a short placeholder; artwork stands in for choir photos.
-- Thank-you list empty (invite-first-supporters state).
-- Budget progress hidden until static numbers are entered (never invent totals).
+1. Supply hero performance, ensemble, patroness, and singer portraits (Facebook page blocks automated fetch).
+2. Add composer credits when known — do not invent them.
+3. Fill GCash name, number, and QR under `public/`.
+4. Publish `timeLabel` and `mapUrl` when confirmed.
+5. Confirm keepsake pickup / deadline / size chart.
+6. Add `voices[]` entries with real names and optional bios.
+7. Watch inbox for `[Exaltavit Gift]`, `[Exaltavit Merch]`, `[Exaltavit RSVP]`, `[Exaltavit Partner]` + Record ID.
+8. Add thank-you names only with recognition consent.
 
 ## Brand
 
-Ivory `#F7F2E9` · Navy `#101F32` · Gold `#A5783E` · Asia/Manila · PHP
+Ivory `#F7F2E9` · Navy `#101F32` · Gold `#A5783E` · Content max ~1180px · Body 16–18px · Asia/Manila · PHP

@@ -17,7 +17,7 @@ export function Section({
 }) {
   return (
     <section id={id} className={`scroll-mt-24 px-4 py-16 sm:px-6 lg:px-8 ${className}`}>
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-[1180px]">
         <header className="mb-10 max-w-2xl">
           {eyebrow ? (
             <p className="mb-3 text-xs font-semibold tracking-[0.22em] text-gold uppercase">{eyebrow}</p>

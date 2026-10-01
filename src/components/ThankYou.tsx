@@ -4,38 +4,40 @@ import { Section } from './ui'
 export function ThankYou() {
   const list = eventConfig.thankYouList
 
+  if (list.length === 0) {
+    return (
+      <Section
+        id="thanks"
+        eyebrow="Partners"
+        title="Acknowledgments"
+        lead="Concert partners and supporters who opted into public recognition will be listed here."
+      >
+        <a href="#support" className="inline-block text-sm font-semibold text-gold hover:underline">
+          Become a concert partner
+        </a>
+      </Section>
+    )
+  }
+
   return (
     <Section
+      id="thanks"
       eyebrow="Gratitude"
       title="Thank you"
-      lead={
-        list.length > 0
-          ? 'With thanks to early supporters who chose public recognition.'
-          : 'Be among the first to support Exaltavit — recognized names will appear here when donors opt in.'
-      }
+      lead="With thanks to supporters who chose public recognition."
       className="bg-ivory-deep/30"
     >
-      {list.length > 0 ? (
-        <ul className="columns-1 gap-8 sm:columns-2">
-          {list.map((entry) => (
-            <li key={entry.name} className="mb-3 break-inside-avoid">
-              <p className="font-display text-2xl text-navy">{entry.name}</p>
-              {entry.note ? <p className="text-sm text-navy/60">{entry.note}</p> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="border border-dashed border-gold/40 bg-ivory px-6 py-10 text-center">
-          <p className="font-display text-3xl text-navy">Invite the first supporters</p>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-navy/65">
-            When gifts arrive with recognition consent, the organizer can list first names in config. Until then, this
-            space stays open as an invitation.
-          </p>
-          <a href="#support" className="mt-6 inline-block text-sm font-semibold text-gold hover:underline">
-            Support the concert
-          </a>
-        </div>
-      )}
+      <ul className="columns-1 gap-8 sm:columns-2">
+        {list.map((entry) => (
+          <li key={entry.name} className="mb-3 break-inside-avoid">
+            <p className="font-display text-2xl text-navy">{entry.name}</p>
+            {entry.note ? <p className="text-sm text-navy/60">{entry.note}</p> : null}
+          </li>
+        ))}
+      </ul>
+      {eventConfig.budget.updatedAt ? (
+        <p className="mt-6 text-xs text-navy/50">List updated {eventConfig.budget.updatedAt}</p>
+      ) : null}
     </Section>
   )
 }
