@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { Product } from '../config/event'
 import {
   addToCart,
@@ -48,4 +48,20 @@ export function useCart() {
       setLines([])
     },
   }
+}
+
+export type CartStore = ReturnType<typeof useCart> & {
+  open: boolean
+  openCart: () => void
+  closeCart: () => void
+  /** Increments on every add — drives the cart button's bump animation */
+  addedTick: number
+}
+
+export const CartContext = createContext<CartStore | null>(null)
+
+export function useCartStore(): CartStore {
+  const store = useContext(CartContext)
+  if (!store) throw new Error('useCartStore must be used inside CartContext')
+  return store
 }

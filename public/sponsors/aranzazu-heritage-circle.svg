@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Aranzazu Heritage Circle logo (sample)">
+  <rect width="64" height="64" rx="12" fill="#7a2e3a"/>
+  <circle cx="32" cy="32" r="21" fill="none" stroke="#f0c987" stroke-width="2.5"/>
+  <path d="M22 46V31a10 10 0 0 1 20 0v15" fill="none" stroke="#f7f2e9" stroke-width="3" stroke-linecap="round"/>
+  <path d="M28 46V34a4 4 0 0 1 8 0v12" fill="#f0c987"/>
+  <path d="M32 14v6M29 17h6" stroke="#f7f2e9" stroke-width="2" stroke-linecap="round"/>
+</svg>

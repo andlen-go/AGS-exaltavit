@@ -1,25 +1,23 @@
 import { useState } from 'react'
-import { eventConfig, getShareUrl } from '../config/event'
-import { copyText } from '../lib/mailto'
-import { Button, Notice, Sheet } from './ui'
+import { eventConfig } from '../config/event'
+import { ShareBar } from './ShareBar'
+import { BrandLogo, Sheet } from './ui'
 
 export function Footer() {
   const [dialog, setDialog] = useState<'privacy' | 'orders' | null>(null)
-  const [shareStatus, setShareStatus] = useState<string | null>(null)
-
-  async function copyLink() {
-    const url = getShareUrl()
-    const ok = await copyText(url)
-    setShareStatus(ok ? 'Page link copied.' : `Copy this link: ${url}`)
-  }
 
   return (
     <footer className="border-t border-navy/10 bg-navy px-4 py-14 text-ivory sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1180px]">
         <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <p className="text-xs font-semibold tracking-[0.22em] text-gold-soft uppercase">{eventConfig.organizer}</p>
-            <h2 className="mt-2 font-display text-4xl">{eventConfig.title}</h2>
+            <div className="flex items-center gap-4">
+              <BrandLogo className="h-20 w-auto" />
+              <div>
+                <p className="text-xs font-semibold tracking-[0.22em] text-gold-soft uppercase">{eventConfig.organizer}</p>
+                <h2 className="mt-2 font-display text-4xl">{eventConfig.title}</h2>
+              </div>
+            </div>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-ivory/70">
               {eventConfig.dateLabel} · {eventConfig.venue}, {eventConfig.venueCity}. Free admission.
             </p>
@@ -38,15 +36,9 @@ export function Footer() {
               >
                 Contact
               </a>
-              <Button type="button" variant="gold" onClick={copyLink}>
-                Copy page link
-              </Button>
             </div>
-            {shareStatus ? (
-              <div className="mt-4 max-w-md">
-                <Notice tone="success">{shareStatus}</Notice>
-              </div>
-            ) : null}
+            <p className="mt-8 text-xs font-semibold tracking-[0.22em] text-gold-soft uppercase">Share this page</p>
+            <ShareBar tone="dark" className="mt-3" />
           </div>
 
           <div className="space-y-4 text-sm text-ivory/70">

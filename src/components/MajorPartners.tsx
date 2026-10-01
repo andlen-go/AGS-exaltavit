@@ -1,5 +1,9 @@
-import { useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { eventConfig, hasMajorPartners } from '../config/event'
+import { useSupportDrawer } from '../hooks/useSupportDrawer'
+import { SponsorBadge } from './ui'
+
+const TOP_STRIP_ID = 'major-partners-top'
 
 /** Compact major-partner strip — desktop top banner + mobile under header. Sample partners are fictitious. */
 export function MajorPartners() {
@@ -10,10 +14,11 @@ export function MajorPartners() {
 
   return (
     <aside
+      id={TOP_STRIP_ID}
       className="border-b border-navy/10 bg-navy text-ivory"
       aria-label="Major partners"
     >
-      <div className="mx-auto flex max-w-[1180px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1180px] flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-8">
         <div className="shrink-0">
           <p className="text-[10px] font-semibold tracking-[0.22em] text-gold-soft uppercase">
             Presented with
@@ -22,15 +27,18 @@ export function MajorPartners() {
             <p className="mt-0.5 text-[11px] text-ivory/55">Demo partners — replace in config</p>
           ) : null}
         </div>
-        <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:justify-end">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:flex lg:items-center lg:justify-end lg:gap-8">
           {partners.map((partner) => (
-            <li key={partner.name} className="min-w-0">
-              <p className="font-display text-xl leading-tight text-ivory sm:text-2xl">{partner.name}</p>
-              {partner.sample ? (
-                <p className="text-[10px] tracking-[0.14em] text-gold-soft/70 uppercase">Sample</p>
-              ) : partner.note ? (
-                <p className="text-xs text-ivory/60">{partner.note}</p>
-              ) : null}
+            <li key={partner.name} className="flex min-w-0 items-center gap-3">
+              <SponsorBadge name={partner.name} logoSrc={partner.logoSrc} className="h-10 w-10 lg:h-11 lg:w-11" />
+              <div className="min-w-0">
+                <p className="font-display text-lg leading-tight text-ivory sm:text-xl lg:text-2xl">{partner.name}</p>
+                {partner.sample ? (
+                  <p className="text-[10px] tracking-[0.14em] text-gold-soft/70 uppercase">Sample</p>
+                ) : partner.note ? (
+                  <p className="text-xs text-ivory/60">{partner.note}</p>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
@@ -39,59 +47,55 @@ export function MajorPartners() {
   )
 }
 
-/** Sticky side rail highlighting major partners. Wide screens show the card; narrower screens a tab that expands it. */
-export function MajorPartnersRail() {
-  const [expanded, setExpanded] = useState(false)
-  if (!hasMajorPartners()) return null
+/**
+ * Partner bar pinned to the bottom of the viewport while scrolling through the page; it is sticky
+ * inside <main>, so it parks naturally just above the footer. Hidden while the support panel is open
+ * because that panel already shows the partners.
+ */
+export function PartnersBar() {
+  const { open: supportOpen } = useSupportDrawer()
+  const [topStripVisible, setTopStripVisible] = useState(true)
+
+  useEffect(() => {
+    const topStrip = document.getElementById(TOP_STRIP_ID)
+    if (!topStrip) return
+    const observer = new IntersectionObserver(([entry]) => setTopStripVisible(entry.isIntersecting))
+    observer.observe(topStrip)
+    return () => observer.disconnect()
+  }, [])
+
+  if (!hasMajorPartners() || supportOpen) return null
+  const hidden = topStripVisible
 
   return (
     <aside
-      className="pointer-events-none fixed top-1/2 right-0 z-30 -translate-y-1/2"
-      aria-label="Major partners rail"
+      aria-hidden={hidden}
+      inert={hidden}
+      className={`sticky bottom-16 z-20 border-t border-gold-soft/40 bg-navy/95 text-ivory shadow-[0_-6px_18px_rgba(16,31,50,0.18)] backdrop-blur-sm transition duration-300 motion-reduce:transition-none md:bottom-0 ${
+        hidden ? 'pointer-events-none translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+      }`}
+      aria-label="Major partners"
     >
-      <button
-        type="button"
-        onClick={() => setExpanded(true)}
-        aria-expanded={expanded}
-        className={`pointer-events-auto border border-r-0 border-navy/25 bg-gold-soft px-2.5 py-4 text-[10px] font-semibold tracking-[0.2em] text-navy uppercase shadow-lg [writing-mode:vertical-rl] rotate-180 hover:bg-ivory xl:hidden ${
-          expanded ? 'hidden' : ''
-        }`}
-      >
-        Partners
-      </button>
-      <div
-        className={`pointer-events-auto mr-3 w-[11.5rem] border border-gold-soft/70 bg-navy/95 ring-1 ring-ivory/10 px-4 py-5 text-ivory shadow-lg backdrop-blur-sm xl:block ${
-          expanded ? 'block' : 'hidden'
-        }`}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-[10px] font-semibold tracking-[0.2em] text-gold-soft uppercase">Major partners</p>
-          <button
-            type="button"
-            onClick={() => setExpanded(false)}
-            aria-label="Collapse major partners"
-            className="-mt-1 -mr-1 px-1 text-sm leading-none text-ivory/60 hover:text-ivory xl:hidden"
-          >
-            ×
-          </button>
-        </div>
-        <ul className="mt-3 space-y-3">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 sm:gap-5 sm:px-6">
+        <p className="hidden shrink-0 text-[10px] font-semibold tracking-[0.2em] text-gold-soft uppercase sm:block">
+          Presented with
+        </p>
+        <ul className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden sm:gap-5">
           {eventConfig.majorPartners.map((partner) => (
-            <li key={partner.name}>
-              <p className="font-display text-lg leading-snug text-ivory">{partner.name}</p>
-              {partner.sample ? (
-                <p className="mt-0.5 text-[10px] tracking-[0.12em] text-ivory/50 uppercase">Sample</p>
-              ) : null}
+            <li key={partner.name} className="flex min-w-0 items-center gap-2" title={partner.name}>
+              <SponsorBadge name={partner.name} logoSrc={partner.logoSrc} className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+              <span className="truncate font-display text-sm leading-tight text-ivory sm:text-base">{partner.name}</span>
             </li>
           ))}
         </ul>
         <a
           href="#thanks"
-          className="mt-4 inline-block text-[11px] font-semibold tracking-wide text-gold-soft underline-offset-4 hover:underline"
+          className="hidden shrink-0 text-[11px] font-semibold tracking-wide text-gold-soft underline-offset-4 hover:underline lg:inline"
         >
-          View acknowledgments
+          Acknowledgments
         </a>
       </div>
     </aside>
   )
 }
+

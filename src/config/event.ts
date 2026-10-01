@@ -28,6 +28,10 @@ export type SponsorOpportunity = {
 export type NamedSponsor = {
   name: string
   note?: string
+  /** Logo under public/ (square works best) — individuals fall back to an initials badge */
+  logoSrc?: string
+  /** Short feature write-up shown in Acknowledgments */
+  blurb?: string
   /** Fictitious demo entry — replace with a confirmed partner */
   sample?: boolean
 }
@@ -101,6 +105,12 @@ export type EventConfig = {
   patronageLead: string
   patronageValuePoints: string[]
   suggestedAmountsPhp: number[]
+  /** Confirmed RSVPs tallied by the organizer from the inbox — update as confirmations arrive. */
+  rsvpTally: {
+    guests: number
+    confirmations: number
+    updatedLabel: string
+  }
   gcash: {
     accountName: string
     accountNumber: string
@@ -269,6 +279,11 @@ export const eventConfig: EventConfig = {
     'Support hospitality that lets singers and crew arrive ready to give their best.',
   ],
   suggestedAmountsPhp: [100, 250, 500, 1000],
+  rsvpTally: {
+    guests: 128,
+    confirmations: 47,
+    updatedLabel: 'Sample count — update in config',
+  },
   gcash: {
     accountName: '',
     accountNumber: '',
@@ -402,24 +417,68 @@ export const eventConfig: EventConfig = {
     {
       name: 'San Mateo Community Trust',
       note: 'Major partner (sample)',
+      logoSrc: '/sponsors/san-mateo-community-trust.svg',
+      blurb:
+        'A local trust investing in shared spaces and gatherings across San Mateo — underwriting free admission so every family can attend.',
       sample: true,
     },
     {
       name: 'Aranzazu Heritage Circle',
       note: 'Major partner (sample)',
+      logoSrc: '/sponsors/aranzazu-heritage-circle.svg',
+      blurb:
+        'Stewards of the shrine’s history and devotions, helping bring sacred music back beneath the patroness’s roof.',
       sample: true,
     },
   ],
   organizationSponsors: [
-    { name: 'Rizal Arts Collective', note: 'Organization sponsor (sample)', sample: true },
-    { name: 'Parish Friends of Music', note: 'Organization sponsor (sample)', sample: true },
-    { name: 'East Valley Cultural Guild', note: 'Organization sponsor (sample)', sample: true },
+    {
+      name: 'Rizal Arts Collective',
+      note: 'Organization sponsor (sample)',
+      logoSrc: '/sponsors/rizal-arts-collective.svg',
+      blurb: 'Artists and designers from across Rizal supporting the concert’s print and visual identity.',
+      sample: true,
+    },
+    {
+      name: 'Parish Friends of Music',
+      note: 'Organization sponsor (sample)',
+      logoSrc: '/sponsors/parish-friends-of-music.svg',
+      blurb: 'Parish volunteers who keep liturgical and choral music thriving — supporting rehearsal hospitality.',
+      sample: true,
+    },
+    {
+      name: 'East Valley Cultural Guild',
+      note: 'Organization sponsor (sample)',
+      logoSrc: '/sponsors/east-valley-cultural-guild.svg',
+      blurb: 'A guild of local businesses championing culture in the valley — helping with venue logistics and tech.',
+      sample: true,
+    },
   ],
   individualSponsors: [
-    { name: 'A. Mendoza', note: 'Individual sponsor (sample)', sample: true },
-    { name: 'The Ramos Family', note: 'Individual sponsor (sample)', sample: true },
-    { name: 'C. Villanueva', note: 'Individual sponsor (sample)', sample: true },
-    { name: 'Anonymous friend of the choir', note: 'Individual sponsor (sample)', sample: true },
+    {
+      name: 'A. Mendoza',
+      note: 'Individual sponsor (sample)',
+      blurb: 'A longtime parishioner sponsoring refreshments for singers and crew.',
+      sample: true,
+    },
+    {
+      name: 'The Ramos Family',
+      note: 'Individual sponsor (sample)',
+      blurb: 'Supporting printed programs in memory of a beloved choir member.',
+      sample: true,
+    },
+    {
+      name: 'C. Villanueva',
+      note: 'Individual sponsor (sample)',
+      blurb: 'A music teacher helping open the evening to young singers and students.',
+      sample: true,
+    },
+    {
+      name: 'Anonymous friend of the choir',
+      note: 'Individual sponsor (sample)',
+      blurb: 'A quiet gift toward production essentials — with gratitude.',
+      sample: true,
+    },
   ],
   voicesIntro:
     'The Voices of Exaltavit — singers, conductor, accompanists, and the people behind the performance.',
@@ -567,6 +626,10 @@ export function getShareUrl(config: EventConfig = eventConfig): string {
   if (config.siteUrl.trim()) return config.siteUrl.trim()
   if (typeof window !== 'undefined') return window.location.href.split('#')[0]
   return ''
+}
+
+export function getShareText(config: EventConfig = eventConfig): string {
+  return `${config.title} — a free choral concert by ${config.organizer} on ${config.dateLabel} at the ${config.venue}, ${config.venueCity}. Join us!`
 }
 
 export function getHighlightRepertoire(config: EventConfig = eventConfig): RepertoireItem[] {

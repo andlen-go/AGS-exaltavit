@@ -1,5 +1,5 @@
-import { eventConfig, hasAcknowledgments } from '../config/event'
-import { Section } from './ui'
+import { eventConfig, hasAcknowledgments, type NamedSponsor } from '../config/event'
+import { Section, SponsorBadge } from './ui'
 
 function SponsorList({
   title,
@@ -7,7 +7,7 @@ function SponsorList({
   large = false,
 }: {
   title: string
-  entries: { name: string; note?: string; sample?: boolean }[]
+  entries: NamedSponsor[]
   large?: boolean
 }) {
   if (entries.length === 0) return null
@@ -15,34 +15,32 @@ function SponsorList({
   return (
     <div className="mb-12 last:mb-0">
       <h3 className="font-display text-2xl text-navy sm:text-3xl">{title}</h3>
-      <ul
-        className={
-          large
-            ? 'mt-6 grid gap-6 sm:grid-cols-2'
-            : 'mt-5 columns-1 gap-8 sm:columns-2'
-        }
-      >
+      <ul className={`mt-6 grid gap-5 sm:grid-cols-2 ${large ? '' : 'lg:grid-cols-3'}`}>
         {entries.map((entry) => (
           <li
             key={entry.name}
-            className={large ? '' : 'mb-3 break-inside-avoid'}
+            className={`flex gap-4 rounded-md border bg-ivory/70 shadow-sm ${
+              large ? 'border-gold/40 p-6' : 'border-navy/10 p-5'
+            }`}
           >
-            <p
-              className={
-                large
-                  ? 'font-display text-3xl text-navy sm:text-4xl'
-                  : 'font-display text-2xl text-navy'
-              }
-            >
-              {entry.name}
-            </p>
-            {entry.sample ? (
-              <p className="mt-1 text-[11px] tracking-[0.14em] text-gold uppercase">
-                Sample — fictitious demo partner
+            <SponsorBadge
+              name={entry.name}
+              logoSrc={entry.logoSrc}
+              className={large ? 'h-16 w-16 sm:h-20 sm:w-20' : 'h-12 w-12'}
+            />
+            <div className="min-w-0">
+              <p className={large ? 'font-display text-3xl leading-tight text-navy' : 'font-display text-xl leading-snug text-navy'}>
+                {entry.name}
               </p>
-            ) : entry.note ? (
-              <p className="mt-1 text-sm text-navy/60">{entry.note}</p>
-            ) : null}
+              {entry.sample ? (
+                <p className="mt-1 text-[11px] tracking-[0.14em] text-gold uppercase">Sample — fictitious demo partner</p>
+              ) : entry.note ? (
+                <p className="mt-1 text-xs tracking-wide text-navy/55">{entry.note}</p>
+              ) : null}
+              {entry.blurb ? (
+                <p className={`mt-2 leading-relaxed text-navy/70 ${large ? 'text-base' : 'text-sm'}`}>{entry.blurb}</p>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>
