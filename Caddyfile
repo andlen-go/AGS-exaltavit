@@ -1,0 +1,24 @@
+# Optional local reverse proxy: https://dev.exaltavit.com/ (port 443) → Vite on 5179
+#
+# Prerequisites:
+# 1. Windows hosts: 127.0.0.1  dev.exaltavit.com
+# 2. mkcert certs in ./certs/ (same files Vite uses)
+# 3. Vite running: npm run dev  (https://dev.exaltavit.com:5179)
+# 4. Caddy installed (https://caddyserver.com/docs/install)
+#
+# Run from the repo root (elevated/admin may be required to bind :443 on Windows):
+#   caddy run --config Caddyfile
+#
+# WSL tip: bind Windows localhost carefully — prefer running Caddy on the same side
+# as your browser (usually Windows) while Vite runs in WSL, or run both in WSL and
+# use `localhost` forwarding. If Vite is only on WSL, point reverse_proxy at the
+# WSL IP instead of 127.0.0.1.
+
+{
+	auto_https off
+}
+
+dev.exaltavit.com {
+	tls ./certs/dev.exaltavit.com.pem ./certs/dev.exaltavit.com-key.pem
+	reverse_proxy 127.0.0.1:5179
+}

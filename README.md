@@ -8,12 +8,12 @@ Stack: **Vite + React + TypeScript + Tailwind**. Fully static. No database, auth
 
 | Environment | URL | How it updates |
 | --- | --- | --- |
-| **Local** | [http://dev.exaltavit.com:5179/](http://dev.exaltavit.com:5179/) | `npm run dev` on your Windows/WSL clone |
+| **Local (HTTPS)** | [https://dev.exaltavit.com:5179/](https://dev.exaltavit.com:5179/) | `npm run dev` with mkcert certs (or Caddy on `:443`) |
 | **Staging** | [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/) | Push or merge to `main` (Netlify production branch) |
 
-Full Windows + WSL walkthrough: see the Project doc `docs/local-setup-guide.md` (Andlen setup guide).
+Full Windows + WSL walkthrough (hosts, mkcert, Caddy): see the Project doc `docs/local-setup-guide.md`.
 
-## Run locally (Windows + WSL)
+## Run locally (Windows + WSL) with trusted HTTPS
 
 Clone path (Windows): `C:\Users\ARGO\Projects\AGS-exaltavit`  
 WSL path: `/mnt/c/Users/ARGO/Projects/AGS-exaltavit`
@@ -24,7 +24,31 @@ WSL path: `/mnt/c/Users/ARGO/Projects/AGS-exaltavit`
    127.0.0.1  dev.exaltavit.com
    ```
 
-2. In WSL, install and start the app:
+2. Install **mkcert** and create a local CA + cert for `dev.exaltavit.com` (WSL example):
+
+   ```bash
+   # Ubuntu/WSL — install mkcert (or use the Windows mkcert binary; see local-setup-guide)
+   sudo apt-get update && sudo apt-get install -y libnss3-tools
+   curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+   chmod +x mkcert-v*-linux-amd64
+   sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+   mkcert -install
+
+   cd /mnt/c/Users/ARGO/Projects/AGS-exaltavit
+   mkdir -p certs
+   mkcert -key-file certs/dev.exaltavit.com-key.pem -cert-file certs/dev.exaltavit.com.pem dev.exaltavit.com localhost 127.0.0.1
+   ```
+
+   `certs/*.pem` are gitignored. Do not commit them.
+
+3. Create `.env.local` (not committed):
+
+   ```
+   VITE_SITE_URL=https://dev.exaltavit.com:5179
+   VITE_DEV_HTTPS=true
+   ```
+
+4. Start Vite:
 
    ```bash
    cd /mnt/c/Users/ARGO/Projects/AGS-exaltavit
@@ -32,21 +56,21 @@ WSL path: `/mnt/c/Users/ARGO/Projects/AGS-exaltavit`
    npm run dev
    ```
 
-3. Create `.env.local` (not committed):
+5. Open **[https://dev.exaltavit.com:5179/](https://dev.exaltavit.com:5179/)** — trusted by the browser because of mkcert’s local CA.
 
-   ```
-   VITE_SITE_URL=http://dev.exaltavit.com:5179
-   ```
+Vite uses `host: true`, port **5179**, `strictPort: true`, `allowedHosts` including `dev.exaltavit.com`, and `server.https` when certs exist and/or `VITE_DEV_HTTPS=true`.
 
-4. Open [http://dev.exaltavit.com:5179/](http://dev.exaltavit.com:5179/)
+### Optional: `https://dev.exaltavit.com/` without a port
 
-Vite is configured for `host: true`, port **5179**, `strictPort: true`, and `allowedHosts: ['dev.exaltavit.com', 'localhost']`.
+Port **443** needs elevation. Prefer one of:
+
+- **Caddy reverse proxy** (recommended): keep Vite on 5179, run the repo `Caddyfile` so Caddy terminates TLS with the same mkcert files and proxies to `127.0.0.1:5179`. Then set `VITE_SITE_URL=https://dev.exaltavit.com`.
+- **Elevated Vite on 443**: change `server.port` to `443` and run the terminal as Administrator / `sudo` (not the default).
 
 ```bash
 npm run build
 npm run preview
 ```
-
 ## Staging deploy (Netlify)
 
 Staging is the existing Netlify site at **https://exaltavit.netlify.app**.
