@@ -1,21 +1,117 @@
-import { useState } from 'react'
-import { eventConfig, formatPhp, getOrderableProducts, isMerchReady } from '../config/event'
+import { useMemo, useState } from 'react'
+import {
+  eventConfig,
+  formatPhp,
+  getAccessoryProducts,
+  getFeaturedProducts,
+  getOrderableProducts,
+  isMerchReady,
+  isOrganizerEmailReady,
+  resolveVariantId,
+  type Product,
+} from '../config/event'
 import { useCart } from '../hooks/useCart'
 import { cartSubtotal } from '../lib/cart'
-import { copyText, formatEmailPackage, makeRecordId, openMailto } from '../lib/mailto'
+import { copyText, formatEmailPackage, makeRecordId, openMailto, type MailtoPayload } from '../lib/mailto'
+import { MailtoActions, MediaPlaceholder } from './MediaPlaceholder'
 import { Button, Field, Input, Notice, Section, Select } from './ui'
 
 type Props = {
   onSheetOpenChange?: (open: boolean) => void
 }
 
+function ProductCard({
+  product,
+  compact = false,
+  onAdd,
+}: {
+  product: Product
+  compact?: boolean
+  onAdd: (product: Product, variantId: string) => void
+}) {
+  const [colorId, setColorId] = useState(product.colors?.[0]?.id ?? '')
+  const [sizeId, setSizeId] = useState(product.sizes?.[0]?.id ?? '')
+  const [variantId, setVariantId] = useState(product.variants[0]?.id ?? '')
+
+  const activeVariantId = useMemo(() => {
+    if (product.colors?.length || product.sizes?.length) {
+      return resolveVariantId(product, colorId || undefined, sizeId || undefined)
+    }
+    return variantId
+  }, [product, colorId, sizeId, variantId])
+
+  return (
+    <article className={`flex flex-col ${compact ? '' : ''}`}>
+      <div className={`mb-4 overflow-hidden bg-navy/5 ${compact ? 'aspect-square' : 'aspect-[4/3]'}`}>
+        {product.imageSrc ? (
+          <img
+            src={product.imageSrc}
+            alt={product.imageAlt ?? product.name}
+            className="h-full w-full object-cover object-top"
+          />
+        ) : (
+          <MediaPlaceholder label={`${product.name} product photo`} className="h-full w-full">
+            <p className="font-display text-2xl text-ivory">{product.name}</p>
+            <p className="mt-1 text-[10px] tracking-[0.16em] text-gold-soft uppercase">Artwork placeholder</p>
+          </MediaPlaceholder>
+        )}
+      </div>
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className={`font-display text-navy ${compact ? 'text-xl' : 'text-2xl'}`}>{product.name}</h3>
+        <p className={`font-semibold text-gold ${compact ? 'text-sm' : 'text-base'}`}>
+          {formatPhp(product.pricePhp)}
+        </p>
+      </div>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-navy/70">{product.description}</p>
+      <div className="mt-4 space-y-3">
+        {product.colors?.length ? (
+          <Field label="Color">
+            <Select value={colorId} onChange={(event) => setColorId(event.target.value)}>
+              {product.colors.map((color) => (
+                <option key={color.id} value={color.id}>
+                  {color.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
+        {product.sizes?.length ? (
+          <Field label="Size">
+            <Select value={sizeId} onChange={(event) => setSizeId(event.target.value)}>
+              {product.sizes.map((size) => (
+                <option key={size.id} value={size.id}>
+                  {size.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
+        {!product.colors?.length && !product.sizes?.length ? (
+          <Field label="Option">
+            <Select value={variantId} onChange={(event) => setVariantId(event.target.value)}>
+              {product.variants.map((variant) => (
+                <option key={variant.id} value={variant.id}>
+                  {variant.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
+        <Button type="button" variant="secondary" className="w-full" onClick={() => onAdd(product, activeVariantId)}>
+          Add to cart
+        </Button>
+      </div>
+    </article>
+  )
+}
+
 export function Merchandise({ onSheetOpenChange }: Props) {
   const products = getOrderableProducts()
+  const featured = getFeaturedProducts()
+  const accessories = getAccessoryProducts()
   const merchReady = isMerchReady()
+  const emailReady = isOrganizerEmailReady()
   const cart = useCart()
-  const [variantByProduct, setVariantByProduct] = useState<Record<string, string>>(() =>
-    Object.fromEntries(products.map((product) => [product.id, product.variants[0]?.id ?? ''])),
-  )
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [name, setName] = useState('')
   const [contact, setContact] = useState('')
@@ -29,29 +125,24 @@ export function Merchandise({ onSheetOpenChange }: Props) {
     onSheetOpenChange?.(open)
   }
 
-  async function submitOrder() {
-    setError(null)
-    setStatus(null)
-
+  function buildOrderPayload(): MailtoPayload | null {
     if (cart.lines.length === 0) {
       setError('Add at least one item to your cart.')
-      return
+      return null
     }
     if (!name.trim() || !contact.trim()) {
       setError('Name and one contact method are required.')
-      return
+      return null
     }
     if (!policyOk) {
       setError('Please acknowledge the pre-order policy before sending.')
-      return
+      return null
     }
-
     const addon = Number(donationAddon) || 0
     if (addon < 0) {
       setError('Donation add-on cannot be negative.')
-      return
+      return null
     }
-
     const subtotal = cartSubtotal(cart.lines)
     const total = subtotal + addon
     const recordId = makeRecordId('MERCH')
@@ -61,10 +152,9 @@ export function Merchandise({ onSheetOpenChange }: Props) {
           `- ${line.productName} (${line.variantLabel}) × ${line.quantity} = ${formatPhp(line.unitPricePhp * line.quantity)}`,
       )
       .join('\n')
-
     const subject = `[Exaltavit Merch] ${recordId} — ${formatPhp(total)}`
     const body = [
-      'Exaltavit merchandise pre-order',
+      'Exaltavit keepsake pre-order',
       `Record ID: ${recordId}`,
       `Name: ${name.trim()}`,
       `Contact: ${contact.trim()}`,
@@ -77,110 +167,86 @@ export function Merchandise({ onSheetOpenChange }: Props) {
       `Order total: ${formatPhp(total)}`,
       '',
       `Pickup note: ${eventConfig.pickupCopy}`,
+      `Order deadline: ${eventConfig.orderDeadlineCopy}`,
       `Size chart ready: ${eventConfig.sizeChartReady ? 'yes' : 'no — confirm sizes with organizer if unsure'}`,
       'Policy acknowledged: yes',
       '',
-      'This is a pre-order request emailed to the organizer. Payment and pickup will be confirmed by reply.',
+      'This is a pre-order request. Payment and pickup will be confirmed by reply.',
     ].join('\n')
+    return { to: eventConfig.organizerEmail, subject, body }
+  }
 
-    const payload = { to: eventConfig.organizerEmail, subject, body }
-    const copied = await copyText(formatEmailPackage(payload))
+  async function openOrderDraft() {
+    setError(null)
+    setStatus(null)
+    const payload = buildOrderPayload()
+    if (!payload) return
     openMailto(payload)
-    setStatus(
-      copied
-        ? `Your email app should open — if not, paste the copied message to ${eventConfig.organizerEmail}.`
-        : `Your email app should open — if not, email ${eventConfig.organizerEmail} with your order summary.`,
-    )
+    setStatus('Your email draft should open. Nothing is sent until you press send in your mail app.')
     cart.reset()
     setPolicyOk(false)
     setSheet(false)
   }
 
+  async function copyOrderMessage() {
+    setError(null)
+    setStatus(null)
+    const payload = buildOrderPayload()
+    if (!payload) return
+    const ok = await copyText(formatEmailPackage(payload))
+    setStatus(ok ? 'Message copied. Paste it into your email app when ready.' : 'Could not copy — try Open email draft.')
+  }
+
   return (
     <Section
       id="merchandise"
-      eyebrow="Merchandise"
-      title="Wear the concert"
-      lead="Pre-order draft catalog pieces. Checkout composes an email to the organizer — no online payment on this site."
-      className="bg-ivory-deep/35"
+      eyebrow="Keepsakes"
+      title="Exaltavit keepsakes"
+      lead="Take the concert home — featured pieces first, smaller accents below. Checkout sends an order request by email."
     >
-      {!merchReady ? (
-        <Notice tone="warn">Merchandise pre-orders are not open yet. Products will appear when enabled in config.</Notice>
-      ) : (
+      {!merchReady ? null : (
         <>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-navy/65">
               Cart: <strong className="text-navy">{cart.itemCount}</strong> item{cart.itemCount === 1 ? '' : 's'}
               {cart.itemCount > 0 ? ` · ${formatPhp(cartSubtotal(cart.lines))}` : ''}
             </p>
-            <Button type="button" variant="primary" disabled={cart.itemCount === 0} onClick={() => setSheet(true)}>
-              Review cart & checkout
-            </Button>
+            {emailReady ? (
+              <Button type="button" variant="primary" disabled={cart.itemCount === 0} onClick={() => setSheet(true)}>
+                Send order request
+              </Button>
+            ) : null}
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => {
-              const variantId = variantByProduct[product.id] ?? product.variants[0]?.id ?? ''
-              return (
-                <article key={product.id} className="flex flex-col border border-navy/10 bg-ivory p-4">
-                  <div className="mb-4 aspect-[4/3] overflow-hidden bg-navy/5">
-                    {product.imageSrc ? (
-                      <img
-                        src={product.imageSrc}
-                        alt={product.imageAlt ?? product.name}
-                        className="h-full w-full object-cover object-top"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center px-4 text-center">
-                        <div>
-                          <p className="font-display text-2xl text-navy">{product.name}</p>
-                          <p className="mt-1 text-xs tracking-[0.16em] text-gold uppercase">Artwork placeholder</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h3 className="font-display text-2xl text-navy">{product.name}</h3>
-                    <p className="text-sm font-semibold text-gold">{formatPhp(product.pricePhp)}</p>
-                  </div>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-navy/70">{product.description}</p>
-                  <div className="mt-4 space-y-3">
-                    <Field label="Variant">
-                      <Select
-                        value={variantId}
-                        onChange={(event) =>
-                          setVariantByProduct((current) => ({ ...current, [product.id]: event.target.value }))
-                        }
-                      >
-                        {product.variants.map((variant) => (
-                          <option key={variant.id} value={variant.id}>
-                            {variant.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="w-full"
-                      onClick={() => cart.addItem(product, variantId, 1)}
-                    >
-                      Add to cart
-                    </Button>
-                  </div>
-                </article>
-              )
-            })}
+          <div className="mb-4">
+            <h3 className="font-display text-3xl text-navy">Featured</h3>
+          </div>
+          <div className="grid gap-8 sm:grid-cols-2">
+            {(featured.length > 0 ? featured : products.slice(0, 2)).map((product) => (
+              <ProductCard key={product.id} product={product} onAdd={(p, v) => cart.addItem(p, v, 1)} />
+            ))}
           </div>
 
-          {!eventConfig.sizeChartReady ? (
-            <div className="mt-6">
-              <Notice tone="warn">
-                Size chart is not published yet. If you are between sizes, note that in your order email or wait for
-                the organizer’s size guide.
-              </Notice>
-            </div>
+          {accessories.length > 0 ? (
+            <>
+              <div className="mt-12 mb-4">
+                <h3 className="font-display text-3xl text-navy">Accessories</h3>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {accessories.map((product) => (
+                  <ProductCard key={product.id} product={product} compact onAdd={(p, v) => cart.addItem(p, v, 1)} />
+                ))}
+              </div>
+            </>
           ) : null}
+
+          <div className="mt-8 space-y-2 text-sm text-navy/65">
+            <p>{eventConfig.pickupCopy}</p>
+            <p>{eventConfig.orderDeadlineCopy}</p>
+            {!eventConfig.sizeChartReady ? (
+              <p>Size chart not published yet — note if you are between sizes when you order.</p>
+            ) : null}
+          </div>
 
           {status ? (
             <div className="mt-6">
@@ -195,7 +261,7 @@ export function Merchandise({ onSheetOpenChange }: Props) {
           <button className="absolute inset-0 bg-navy/45" aria-label="Close checkout" onClick={() => setSheet(false)} />
           <div className="relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-md bg-ivory p-5 shadow-2xl sm:rounded-md sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
-              <h3 className="font-display text-2xl text-navy">Checkout</h3>
+              <h3 className="font-display text-2xl text-navy">Send order request</h3>
               <button type="button" className="text-sm text-navy/60" onClick={() => setSheet(false)}>
                 Close
               </button>
@@ -254,17 +320,20 @@ export function Merchandise({ onSheetOpenChange }: Props) {
                   className="mt-1"
                 />
                 <span>
-                  I understand this is a pre-order request sent by email. Payment and pickup are confirmed by the
-                  organizer — not processed on this website.
+                  I understand this is a pre-order request. Payment and pickup are confirmed by the organizer — not
+                  processed on this website.
                 </span>
               </label>
               <p className="text-sm font-semibold text-navy">
                 Total: {formatPhp(cartSubtotal(cart.lines) + (Number(donationAddon) || 0))}
               </p>
               {error ? <Notice tone="warn">{error}</Notice> : null}
-              <Button type="button" variant="gold" className="w-full" onClick={submitOrder}>
-                Email my order
-              </Button>
+              <MailtoActions
+                onOpenDraft={openOrderDraft}
+                onCopyMessage={copyOrderMessage}
+                openLabel="Open email draft"
+                copyLabel="Copy message"
+              />
             </div>
           </div>
         </div>

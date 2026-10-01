@@ -15,7 +15,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-navy/10 bg-navy px-4 py-14 text-ivory sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-[1180px]">
         <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr]">
           <div>
             <p className="text-xs font-semibold tracking-[0.22em] text-gold-soft uppercase">{eventConfig.organizer}</p>
