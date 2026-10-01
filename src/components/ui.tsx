@@ -37,13 +37,14 @@ export function Button({
   className = '',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'gold'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'gold' | 'onDark'
 }) {
   const styles = {
     primary: 'bg-navy text-ivory hover:bg-navy-soft',
     secondary: 'border border-navy/25 bg-transparent text-navy hover:border-navy/50 hover:bg-ivory-deep/60',
     ghost: 'bg-transparent text-navy hover:bg-navy/5',
     gold: 'bg-gold text-ivory hover:bg-gold-soft',
+    onDark: 'border border-ivory/40 bg-transparent text-ivory hover:border-ivory/70 hover:bg-ivory/10',
   }[variant]
 
   return (

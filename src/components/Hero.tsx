@@ -40,8 +40,7 @@ export function Hero() {
             </Button>
             <Button
               type="button"
-              variant="secondary"
-              className="border-ivory/35 text-ivory hover:border-ivory/60 hover:bg-ivory/10"
+              variant="onDark"
               onClick={() => document.querySelector('#attend')?.scrollIntoView({ behavior: 'smooth' })}
             >
               I’m attending
