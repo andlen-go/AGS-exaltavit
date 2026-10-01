@@ -19,8 +19,14 @@ export function useCart() {
   }, [])
 
   useEffect(() => {
+    // `ready` stays false during the first effect pass, so we never persist
+    // the initial empty state over a stored cart.
     if (!ready) return
-    saveCart(lines)
+    try {
+      saveCart(lines)
+    } catch {
+      // Keep the in-memory cart usable when storage is blocked.
+    }
   }, [lines, ready])
 
   return {
@@ -28,6 +34,7 @@ export function useCart() {
     ready,
     itemCount: lines.reduce((sum, line) => sum + line.quantity, 0),
     addItem: (product: Product, variantId: string, quantity = 1) => {
+      if (!variantId) return
       setLines((current) => addToCart(current, product, variantId, quantity))
     },
     updateQuantity: (key: string, quantity: number) => {

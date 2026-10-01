@@ -9,7 +9,7 @@ export function Hero() {
     <section id="top" className="relative overflow-hidden">
       {heroSrc ? (
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 scale-105 bg-cover bg-center blur-[1.5px]"
           style={{ backgroundImage: `url('${heroSrc}')` }}
           aria-hidden="true"
         />
@@ -24,8 +24,9 @@ export function Hero() {
           </p>
         </MediaPlaceholder>
       )}
-      <div className="absolute inset-0 bg-gradient-to-r from-navy/94 via-navy/80 to-navy/40" aria-hidden="true" />
-      <div className="absolute inset-0 bg-gradient-to-t from-navy/75 via-transparent to-navy/25" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/88 to-navy/55" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/25 to-navy/45" aria-hidden="true" />
+      <div className="absolute inset-0 bg-navy/25" aria-hidden="true" />
 
       <div className="relative mx-auto flex min-h-[92dvh] max-w-[1180px] flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20 lg:px-8">
         <div className="max-w-xl text-ivory">

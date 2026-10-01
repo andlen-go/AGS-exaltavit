@@ -20,6 +20,14 @@ type Props = {
   onSheetOpenChange?: (open: boolean) => void
 }
 
+function productImagePosition(productId: string) {
+  if (productId === 'enamel') return 'object-[70%_80%]'
+  if (productId === 'button') return 'object-[30%_70%]'
+  if (productId === 'keychain') return 'object-[85%_55%]'
+  if (productId === 'tote') return 'object-[20%_30%]'
+  return 'object-top'
+}
+
 function ProductCard({
   product,
   compact = false,
@@ -47,7 +55,7 @@ function ProductCard({
           <img
             src={product.imageSrc}
             alt={product.imageAlt ?? product.name}
-            className="h-full w-full object-cover object-top"
+            className={`h-full w-full object-cover ${productImagePosition(product.id)}`}
           />
         ) : (
           <MediaPlaceholder label={`${product.name} product photo`} className="h-full w-full">
@@ -119,10 +127,24 @@ export function Merchandise({ onSheetOpenChange }: Props) {
   const [policyOk, setPolicyOk] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [addedNote, setAddedNote] = useState<string | null>(null)
 
   function setSheet(open: boolean) {
     setCheckoutOpen(open)
     onSheetOpenChange?.(open)
+  }
+
+  function handleAdd(product: Product, variantId: string) {
+    if (!variantId) {
+      setError('Choose a variant before adding to cart.')
+      return
+    }
+    cart.addItem(product, variantId, 1)
+    setError(null)
+    setAddedNote(`Added ${product.name} to cart.`)
+    window.setTimeout(() => {
+      setAddedNote((current) => (current?.includes(product.name) ? null : current))
+    }, 2200)
   }
 
   function buildOrderPayload(): MailtoPayload | null {
@@ -207,7 +229,7 @@ export function Merchandise({ onSheetOpenChange }: Props) {
       {!merchReady ? null : (
         <>
           <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-navy/65">
+            <p className="text-sm text-navy/65" aria-live="polite">
               Cart: <strong className="text-navy">{cart.itemCount}</strong> item{cart.itemCount === 1 ? '' : 's'}
               {cart.itemCount > 0 ? ` · ${formatPhp(cartSubtotal(cart.lines))}` : ''}
             </p>
@@ -218,12 +240,23 @@ export function Merchandise({ onSheetOpenChange }: Props) {
             ) : null}
           </div>
 
+          {addedNote ? (
+            <div className="mb-4">
+              <Notice tone="success">{addedNote}</Notice>
+            </div>
+          ) : null}
+          {error && !checkoutOpen ? (
+            <div className="mb-4">
+              <Notice tone="warn">{error}</Notice>
+            </div>
+          ) : null}
+
           <div className="mb-4">
             <h3 className="font-display text-3xl text-navy">Featured</h3>
           </div>
           <div className="grid gap-8 sm:grid-cols-2">
             {(featured.length > 0 ? featured : products.slice(0, 2)).map((product) => (
-              <ProductCard key={product.id} product={product} onAdd={(p, v) => cart.addItem(p, v, 1)} />
+              <ProductCard key={product.id} product={product} onAdd={handleAdd} />
             ))}
           </div>
 
@@ -234,7 +267,7 @@ export function Merchandise({ onSheetOpenChange }: Props) {
               </div>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {accessories.map((product) => (
-                  <ProductCard key={product.id} product={product} compact onAdd={(p, v) => cart.addItem(p, v, 1)} />
+                  <ProductCard key={product.id} product={product} compact onAdd={handleAdd} />
                 ))}
               </div>
             </>
