@@ -30,6 +30,14 @@ export function Repertoire() {
               ) : (
                 <p className="mt-1 text-sm text-navy/45">Composer to be announced</p>
               )}
+              {item.blurb?.trim() ? (
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-navy/70">
+                  {item.blurb}
+                  <span className="ml-2 text-[10px] font-semibold tracking-[0.14em] text-gold/80 uppercase">
+                    Draft
+                  </span>
+                </p>
+              ) : null}
             </div>
           </li>
         ))}

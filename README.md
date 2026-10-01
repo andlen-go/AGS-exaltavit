@@ -10,7 +10,7 @@ Live: [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/)
 
 ```bash
 npm install
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 4719
 ```
 
 Dev server: [http://127.0.0.1:4719](http://127.0.0.1:4719)
@@ -22,15 +22,18 @@ npm run preview
 
 ## Page order
 
-1. Concert invitation (hero)
-2. Dedication to Nuestra Señora de Aranzazu
-3. Performance preview (hidden until video URLs are set)
-4. The Voices of Exaltavit
-5. The Repertoire
-6. Exaltavit keepsakes
-7. Patronage and partnerships
-8. Plan your visit
-9. Acknowledgments / FAQ footer
+1. Major partners strip (under header)
+2. Concert invitation (hero)
+3. Dedication to Nuestra Señora de Aranzazu
+4. Performance preview (hidden until video URLs are set)
+5. The Voices of Exaltavit (section filter chips)
+6. The Repertoire (draft blurbs)
+7. Exaltavit keepsakes
+8. Patronage and partnerships
+9. Plan your visit
+10. Acknowledgments / FAQ footer
+
+Sticky: desktop **Support Exaltavit** chip + major-partners rail; mobile **Attend · Keepsakes · Support** bar.
 
 ## Configure
 
@@ -38,18 +41,18 @@ Edit `src/config/event.ts`:
 
 | Field | Purpose |
 | --- | --- |
-| `organizerEmail` / `privacyContact` | Inbox (currently `avantgardesingers@gmail.com` from FB About) |
+| `majorPartners` / `organizationSponsors` / `individualSponsors` | Acknowledgments tiers; set `sample: true` for demos |
+| `organizerEmail` / `privacyContact` | Inbox (currently `avantgardesingers@gmail.com`) |
 | `dedication` | Marian dedication copy |
-| `repertoire[]` | Approved titles; leave `composer` blank until supplied |
-| `voices[]` | Roster with `slug` for `#voice-{slug}` anchors — no invented names |
+| `repertoire[]` | Titles + optional `composer` / draft `blurb` |
+| `voices[]` | Roster with `slug` for `#voice-{slug}`; singers use `section` |
+| `voicesSampleNote` | UI banner when roster is demo |
 | `previewVideos[]` | Click-to-play URLs; section hidden when empty |
-| `media.hero` / `ensemble` / `patroness` | Photo slots; labeled placeholders until `src` is set |
+| `media.hero` / `ensemble` / `patroness` | Photo slots; optional `credit` |
+| `patronageLead` / `patronageValuePoints` | Support copy (experience + organization value) |
 | `gcash.*` | All three required or GCash panel stays quiet |
 | `mapUrl` / `timeLabel` | Directions and concert time |
 | `products` | Keepsakes; `featured` for shirt/tote row |
-| `thankYouList` | Opt-in public names only |
-
-Unfinished config is **hidden from visitors** (no “not configured” essays). Details for organizers stay in this README and the delivery note.
 
 Optional share URL (no trailing slash):
 
@@ -59,14 +62,14 @@ VITE_SITE_URL=https://exaltavit.netlify.app
 
 ## Organizer checklist
 
-1. Supply hero performance, ensemble, patroness, and singer portraits (Facebook page blocks automated fetch).
-2. Add composer credits when known — do not invent them.
-3. Fill GCash name, number, and QR under `public/`.
-4. Publish `timeLabel` and `mapUrl` when confirmed.
-5. Confirm keepsake pickup / deadline / size chart.
-6. Add `voices[]` entries with real names and optional bios.
-7. Watch inbox for `[Exaltavit Gift]`, `[Exaltavit Merch]`, `[Exaltavit RSVP]`, `[Exaltavit Partner]` + Record ID.
-8. Add thank-you names only with recognition consent.
+1. Replace sample major/org/individual sponsors with confirmed, consented names (`sample: false` or omit).
+2. Replace sample roster (~30 singers + production + leadership) with confirmed names; keep `#voice-{slug}` anchors.
+3. Supply choir performance / ensemble portraits (hero currently uses a temporary Wikimedia shrine facade).
+4. Confirm composers; keep or revise draft repertoire blurbs.
+5. Fill GCash name, number, and QR under `public/`.
+6. Publish `timeLabel` and `mapUrl` when confirmed.
+7. Confirm keepsake pickup / deadline / size chart.
+8. Watch inbox for `[Exaltavit Gift]`, `[Exaltavit Merch]`, `[Exaltavit RSVP]`, `[Exaltavit Partner]` + Record ID.
 
 ## Brand
 

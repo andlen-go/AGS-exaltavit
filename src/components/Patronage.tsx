@@ -137,7 +137,7 @@ export function Patronage({ onSheetOpenChange }: Props) {
     <Section
       id="support"
       eyebrow="Patronage"
-      title="Be part of Exaltavit"
+      title="Support the experience"
       lead={eventConfig.patronageLead}
       className="bg-ivory-deep/25"
     >
@@ -145,7 +145,7 @@ export function Patronage({ onSheetOpenChange }: Props) {
         <div className="space-y-6">
           {progressReady ? (
             <div>
-              <p className="text-sm text-navy/65">Raised toward hospitality & production</p>
+              <p className="text-sm text-navy/65">Raised toward production & hospitality</p>
               <p className="mt-2 font-display text-4xl text-navy">
                 {formatPhp(eventConfig.budget.raisedPhp!)}
                 <span className="ml-2 text-xl text-navy/45">/ {formatPhp(eventConfig.budget.goalPhp!)}</span>
@@ -155,6 +155,15 @@ export function Patronage({ onSheetOpenChange }: Props) {
               ) : null}
             </div>
           ) : null}
+
+          <ul className="space-y-3">
+            {eventConfig.patronageValuePoints.map((point) => (
+              <li key={point} className="flex gap-3 text-sm leading-relaxed text-navy/80">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" aria-hidden="true" />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
 
           <p className="text-sm leading-relaxed text-navy/70">{eventConfig.surplusCopy}</p>
 
@@ -269,8 +278,8 @@ export function Patronage({ onSheetOpenChange }: Props) {
       <div className="mt-14 border-t border-navy/10 pt-10">
         <h3 className="font-display text-3xl text-navy">Partnerships</h3>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-navy/70">
-          Hospitality partners and in-kind supporters help keep admission free. Share a short proposal — the organizer
-          will reply from their inbox.
+          Partners who underwrite production, print, or hospitality help keep admission free and the evening
+          polished. Share a short proposal — the organizer will reply from their inbox.
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {eventConfig.sponsorOpportunities.map((item) => (
