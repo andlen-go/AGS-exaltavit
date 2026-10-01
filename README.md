@@ -20,13 +20,15 @@ npm run preview
 
 ## Deploy
 
-Build output is `dist/`. Deploy that folder to Vercel, Netlify, GitHub Pages, or any static host.
+Production: [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/)
 
-Optional public share URL (used by “Copy page link”):
+Build output is `dist/`. Netlify builds with `npm run build` and publishes `dist/` (see `netlify.toml`). You can also deploy that folder to Vercel, GitHub Pages, or any static host.
+
+Optional public share URL (used by “Copy page link”). Set in Netlify env or local `.env` — **no trailing slash**:
 
 ```bash
 # .env (optional)
-VITE_SITE_URL=https://your-deployed-domain.example
+VITE_SITE_URL=https://exaltavit.netlify.app
 ```
 
 ## Configure content
