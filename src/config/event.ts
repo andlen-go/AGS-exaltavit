@@ -142,6 +142,8 @@ export const eventConfig: EventConfig = {
         { id: 'enamel-rose', label: 'Rose' },
       ],
       preorderEnabled: true,
+      imageSrc: '/exaltavit-artwork-1.png',
+      imageAlt: 'Exaltavit enamel pin artwork preview',
     },
     {
       id: 'button',
@@ -153,6 +155,8 @@ export const eventConfig: EventConfig = {
         { id: 'button-navy', label: 'Navy rose & star' },
       ],
       preorderEnabled: true,
+      imageSrc: '/exaltavit-artwork-2.png',
+      imageAlt: 'Exaltavit button pin artwork preview',
     },
     {
       id: 'keychain',
@@ -167,6 +171,8 @@ export const eventConfig: EventConfig = {
         { id: 'key-star', label: 'Star' },
       ],
       preorderEnabled: true,
+      imageSrc: '/exaltavit-artwork-1.png',
+      imageAlt: 'Exaltavit keychain artwork preview',
     },
   ],
   sponsorOpportunities: [

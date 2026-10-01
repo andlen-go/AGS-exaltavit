@@ -23,10 +23,25 @@ export function Merchandise({ onSheetOpenChange }: Props) {
   const [policyOk, setPolicyOk] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [addedNote, setAddedNote] = useState<string | null>(null)
 
   function setSheet(open: boolean) {
     setCheckoutOpen(open)
     onSheetOpenChange?.(open)
+  }
+
+  function handleAdd(productId: string, productName: string, variantId: string) {
+    const product = products.find((item) => item.id === productId)
+    if (!product || !variantId) {
+      setError('Choose a variant before adding to cart.')
+      return
+    }
+    cart.addItem(product, variantId, 1)
+    setError(null)
+    setAddedNote(`Added ${productName} to cart.`)
+    window.setTimeout(() => {
+      setAddedNote((current) => (current?.includes(productName) ? null : current))
+    }, 2200)
   }
 
   async function submitOrder() {
@@ -109,7 +124,7 @@ export function Merchandise({ onSheetOpenChange }: Props) {
       ) : (
         <>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-navy/65">
+            <p className="text-sm text-navy/65" aria-live="polite">
               Cart: <strong className="text-navy">{cart.itemCount}</strong> item{cart.itemCount === 1 ? '' : 's'}
               {cart.itemCount > 0 ? ` · ${formatPhp(cartSubtotal(cart.lines))}` : ''}
             </p>
@@ -118,9 +133,30 @@ export function Merchandise({ onSheetOpenChange }: Props) {
             </Button>
           </div>
 
+          {addedNote ? (
+            <div className="mb-4">
+              <Notice tone="success">{addedNote}</Notice>
+            </div>
+          ) : null}
+          {error ? (
+            <div className="mb-4">
+              <Notice tone="warn">{error}</Notice>
+            </div>
+          ) : null}
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => {
               const variantId = variantByProduct[product.id] ?? product.variants[0]?.id ?? ''
+              const imagePosition =
+                product.id === 'enamel'
+                  ? 'object-[70%_80%]'
+                  : product.id === 'button'
+                    ? 'object-[30%_70%]'
+                    : product.id === 'keychain'
+                      ? 'object-[85%_55%]'
+                      : product.id === 'tote'
+                        ? 'object-[20%_30%]'
+                        : 'object-top'
               return (
                 <article key={product.id} className="flex flex-col border border-navy/10 bg-ivory p-4">
                   <div className="mb-4 aspect-[4/3] overflow-hidden bg-navy/5">
@@ -128,7 +164,7 @@ export function Merchandise({ onSheetOpenChange }: Props) {
                       <img
                         src={product.imageSrc}
                         alt={product.imageAlt ?? product.name}
-                        className="h-full w-full object-cover object-top"
+                        className={`h-full w-full object-cover ${imagePosition}`}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center px-4 text-center">
@@ -163,7 +199,7 @@ export function Merchandise({ onSheetOpenChange }: Props) {
                       type="button"
                       variant="secondary"
                       className="w-full"
-                      onClick={() => cart.addItem(product, variantId, 1)}
+                      onClick={() => handleAdd(product.id, product.name, variantId)}
                     >
                       Add to cart
                     </Button>
