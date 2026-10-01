@@ -4,20 +4,61 @@ One-page campaign for **Exaltavit**, a free choral concert by **Avant Garde Sing
 
 Stack: **Vite + React + TypeScript + Tailwind**. Fully static. No database, auth, or payment processors. Gifts, keepsake orders, RSVPs, and partnerships use **mailto** with **Open email draft** / **Copy message**.
 
-Live: [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/)
+## Environments
 
-## Run locally
+| Environment | URL | How it updates |
+| --- | --- | --- |
+| **Local** | [http://dev.exaltavit.com:5179/](http://dev.exaltavit.com:5179/) | `npm run dev` on your Windows/WSL clone |
+| **Staging** | [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/) | Push or merge to `main` (Netlify production branch) |
 
-```bash
-npm install
-npm run dev -- --host 127.0.0.1 --port 4719
-```
+Full Windows + WSL walkthrough: see the Project doc `docs/local-setup-guide.md` (Andlen setup guide).
 
-Dev server: [http://127.0.0.1:4719](http://127.0.0.1:4719)
+## Run locally (Windows + WSL)
+
+Clone path (Windows): `C:\Users\ARGO\Projects\AGS-exaltavit`  
+WSL path: `/mnt/c/Users/ARGO/Projects/AGS-exaltavit`
+
+1. Map the hostname in the Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`):
+
+   ```
+   127.0.0.1  dev.exaltavit.com
+   ```
+
+2. In WSL, install and start the app:
+
+   ```bash
+   cd /mnt/c/Users/ARGO/Projects/AGS-exaltavit
+   npm install
+   npm run dev
+   ```
+
+3. Create `.env.local` (not committed):
+
+   ```
+   VITE_SITE_URL=http://dev.exaltavit.com:5179
+   ```
+
+4. Open [http://dev.exaltavit.com:5179/](http://dev.exaltavit.com:5179/)
+
+Vite is configured for `host: true`, port **5179**, `strictPort: true`, and `allowedHosts: ['dev.exaltavit.com', 'localhost']`.
 
 ```bash
 npm run build
 npm run preview
+```
+
+## Staging deploy (Netlify)
+
+Staging is the existing Netlify site at **https://exaltavit.netlify.app**.
+
+1. Develop on a feature branch locally.
+2. Push the branch and open/merge a PR into `main`, **or** push `main` when you intend to update staging.
+3. Netlify rebuilds from `main` (production branch).
+
+Set this Netlify environment variable (Site settings → Environment variables):
+
+```
+VITE_SITE_URL=https://exaltavit.netlify.app
 ```
 
 ## Page order
@@ -54,11 +95,7 @@ Edit `src/config/event.ts`:
 | `mapUrl` / `timeLabel` | Directions and concert time |
 | `products` | Keepsakes; `featured` for shirt/tote row |
 
-Optional share URL (no trailing slash):
-
-```bash
-VITE_SITE_URL=https://exaltavit.netlify.app
-```
+Optional share URL (no trailing slash) — see `.env.example` for local vs staging values.
 
 ## Organizer checklist
 

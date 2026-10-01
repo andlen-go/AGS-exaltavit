@@ -5,13 +5,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    host: '0.0.0.0',
-    port: 4719,
+    host: true,
+    port: 5179,
     strictPort: true,
+    allowedHosts: ['dev.exaltavit.com', 'localhost'],
   },
   preview: {
-    host: '0.0.0.0',
-    port: 4719,
+    host: true,
+    port: 5179,
     strictPort: true,
   },
 })
