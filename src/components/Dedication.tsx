@@ -26,6 +26,11 @@ export function Dedication() {
               className="aspect-[4/5] w-full"
             />
           )}
+          {eventConfig.media.patroness.credit ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-navy/45">
+              {eventConfig.media.patroness.credit}
+            </p>
+          ) : null}
         </div>
         <div>
           <p className="text-base leading-relaxed text-navy/80 sm:text-lg">{eventConfig.dedication.body}</p>

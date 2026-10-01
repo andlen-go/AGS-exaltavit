@@ -101,6 +101,11 @@ export function Hero() {
               Watch a performance preview
             </a>
           ) : null}
+          {eventConfig.media.hero.credit ? (
+            <p className="animate-rise-delay-3 mt-8 max-w-md text-[11px] leading-relaxed text-ivory/45">
+              {eventConfig.media.hero.credit}. Temporary venue photo — replace with a choir performance original.
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

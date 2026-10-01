@@ -24,27 +24,38 @@ export type SponsorOpportunity = {
   summary: string
 }
 
-export type ThankYouEntry = {
+/** Named partner/sponsor entry. Set sample: true for demo placeholders. */
+export type NamedSponsor = {
   name: string
   note?: string
+  /** Fictitious demo entry — replace with a confirmed partner */
+  sample?: boolean
 }
 
 export type RepertoireItem = {
   title: string
   composer?: string
   highlight?: boolean
+  /** Draft program blurb — content placeholder, not official AGS notes */
+  blurb?: string
 }
 
 export type VoiceRole = 'singer' | 'conductor' | 'accompanist' | 'production'
+
+export type VoiceSection = 'soprano' | 'alto' | 'tenor' | 'bass'
 
 export type Voice = {
   slug: string
   name: string
   role: VoiceRole
+  /** SATB section for singers; omit for leadership/production */
+  section?: VoiceSection
   roleLabel?: string
   bio?: string
   portraitSrc?: string
   portraitAlt?: string
+  /** Fictitious demo name — replace with confirmed roster */
+  sample?: boolean
 }
 
 export type PreviewVideo = {
@@ -60,6 +71,7 @@ export type MediaSlot = {
   src?: string
   alt: string
   label: string
+  credit?: string
 }
 
 export type EventConfig = {
@@ -87,6 +99,7 @@ export type EventConfig = {
     body: string
   }
   patronageLead: string
+  patronageValuePoints: string[]
   suggestedAmountsPhp: number[]
   gcash: {
     accountName: string
@@ -101,8 +114,14 @@ export type EventConfig = {
   }
   products: Product[]
   sponsorOpportunities: SponsorOpportunity[]
-  thankYouList: ThankYouEntry[]
+  /** @deprecated Prefer majorPartners / organizationSponsors / individualSponsors */
+  thankYouList: { name: string; note?: string }[]
+  /** Fictitious major partners shown at page top — replace in config when confirmed */
+  majorPartners: NamedSponsor[]
+  organizationSponsors: NamedSponsor[]
+  individualSponsors: NamedSponsor[]
   voicesIntro: string
+  voicesSampleNote: string
   voices: Voice[]
   repertoireIntro: string
   repertoire: RepertoireItem[]
@@ -115,6 +134,106 @@ export type EventConfig = {
 }
 
 const envSiteUrl = import.meta.env.VITE_SITE_URL?.trim() ?? ''
+
+/** Demo-only sample singers — replace with confirmed names before publishing as final. */
+const sampleSopranos: Voice[] = [
+  { slug: 'mira-santos', name: 'Mira Santos', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'elena-cruz', name: 'Elena Cruz', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'isabelle-reyes', name: 'Isabelle Reyes', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'camille-torres', name: 'Camille Torres', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'sofia-lim', name: 'Sofia Lim', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'andrea-navarro', name: 'Andrea Navarro', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'patricia-gomez', name: 'Patricia Gomez', role: 'singer', section: 'soprano', sample: true },
+  { slug: 'diana-flores', name: 'Diana Flores', role: 'singer', section: 'soprano', sample: true },
+]
+
+const sampleAltos: Voice[] = [
+  { slug: 'claire-mendoza', name: 'Claire Mendoza', role: 'singer', section: 'alto', sample: true },
+  { slug: 'rachel-villanueva', name: 'Rachel Villanueva', role: 'singer', section: 'alto', sample: true },
+  { slug: 'julia-ramos', name: 'Julia Ramos', role: 'singer', section: 'alto', sample: true },
+  { slug: 'nina-aquino', name: 'Nina Aquino', role: 'singer', section: 'alto', sample: true },
+  { slug: 'grace-castillo', name: 'Grace Castillo', role: 'singer', section: 'alto', sample: true },
+  { slug: 'andrea-pascual', name: 'Andrea Pascual', role: 'singer', section: 'alto', sample: true },
+  { slug: 'lia-fernandez', name: 'Lia Fernandez', role: 'singer', section: 'alto', sample: true },
+  { slug: 'monica-delacruz', name: 'Monica Dela Cruz', role: 'singer', section: 'alto', sample: true },
+]
+
+const sampleTenors: Voice[] = [
+  { slug: 'marco-diaz', name: 'Marco Diaz', role: 'singer', section: 'tenor', sample: true },
+  { slug: 'ethan-lopez', name: 'Ethan Lopez', role: 'singer', section: 'tenor', sample: true },
+  { slug: 'gabriel-santos', name: 'Gabriel Santos', role: 'singer', section: 'tenor', sample: true },
+  { slug: 'lucas-reyes', name: 'Lucas Reyes', role: 'singer', section: 'tenor', sample: true },
+  { slug: 'adrian-torres', name: 'Adrian Torres', role: 'singer', section: 'tenor', sample: true },
+  { slug: 'noah-garcia', name: 'Noah Garcia', role: 'singer', section: 'tenor', sample: true },
+  { slug: 'julian-ramos', name: 'Julian Ramos', role: 'singer', section: 'tenor', sample: true },
+]
+
+const sampleBasses: Voice[] = [
+  { slug: 'daniel-cruz', name: 'Daniel Cruz', role: 'singer', section: 'bass', sample: true },
+  { slug: 'miguel-santos', name: 'Miguel Santos', role: 'singer', section: 'bass', sample: true },
+  { slug: 'carlo-mendoza', name: 'Carlo Mendoza', role: 'singer', section: 'bass', sample: true },
+  { slug: 'rafael-lim', name: 'Rafael Lim', role: 'singer', section: 'bass', sample: true },
+  { slug: 'andre-villanueva', name: 'Andre Villanueva', role: 'singer', section: 'bass', sample: true },
+  { slug: 'benedicto-reyes', name: 'Benedicto Reyes', role: 'singer', section: 'bass', sample: true },
+  { slug: 'samuel-torres', name: 'Samuel Torres', role: 'singer', section: 'bass', sample: true },
+]
+
+const sampleLeadership: Voice[] = [
+  {
+    slug: 'conductor-placeholder',
+    name: 'Conductor TBA',
+    role: 'conductor',
+    roleLabel: 'Conductor',
+    bio: 'Sample leadership slot — replace with the confirmed conductor.',
+    sample: true,
+  },
+  {
+    slug: 'accompanist-placeholder',
+    name: 'Accompanist TBA',
+    role: 'accompanist',
+    roleLabel: 'Accompanist',
+    bio: 'Sample leadership slot — replace with the confirmed accompanist.',
+    sample: true,
+  },
+]
+
+const sampleProduction: Voice[] = [
+  {
+    slug: 'stage-manager',
+    name: 'Lorenzo Habito',
+    role: 'production',
+    roleLabel: 'Stage manager',
+    sample: true,
+  },
+  {
+    slug: 'production-lead',
+    name: 'Ava Santiago',
+    role: 'production',
+    roleLabel: 'Production lead',
+    sample: true,
+  },
+  {
+    slug: 'hospitality-lead',
+    name: 'Bea Morales',
+    role: 'production',
+    roleLabel: 'Hospitality',
+    sample: true,
+  },
+  {
+    slug: 'tech-liaison',
+    name: 'Ivan Cordero',
+    role: 'production',
+    roleLabel: 'Tech liaison',
+    sample: true,
+  },
+  {
+    slug: 'front-of-house',
+    name: 'Kara Uy',
+    role: 'production',
+    roleLabel: 'Front of house',
+    sample: true,
+  },
+]
 
 export const eventConfig: EventConfig = {
   title: 'Exaltavit',
@@ -132,7 +251,7 @@ export const eventConfig: EventConfig = {
   mapUrl: '',
   privacyContact: 'avantgardesingers@gmail.com',
   surplusCopy:
-    'Any surplus after concert meals and production needs will support future Avant Garde Singers community programs.',
+    'Any surplus after production and hospitality needs will support future Avant Garde Singers community programs.',
   pickupCopy:
     'Pickup details will be confirmed by email before the concert. Exact schedule and location are still being finalized.',
   orderDeadlineCopy: 'Pre-order deadline will be announced soon. Order early so we can confirm sizes and pickup.',
@@ -143,7 +262,12 @@ export const eventConfig: EventConfig = {
     body: 'Exaltavit gathers sacred and choral song beneath the shrine that bears her name — a night of praise, thanksgiving, and welcome for the parish and the wider community.',
   },
   patronageLead:
-    'Be part of Exaltavit. Your gift helps cover concert-day hospitality — including shared meals for the choir and crew — along with print, production, and the quiet costs that keep a free concert possible. Partners who wish to underwrite a need are warmly invited.',
+    'Your patronage sustains a free evening of sacred song — the production essentials that shape the experience, and the hospitality that lets artists give their best. Partners who wish to underwrite a need are warmly invited.',
+  patronageValuePoints: [
+    'Sustain free admission so the parish and community can gather without a ticket barrier.',
+    'Underwrite production essentials — print, tech, and the quiet costs of a polished concert.',
+    'Support hospitality that lets singers and crew arrive ready to give their best.',
+  ],
   suggestedAmountsPhp: [100, 250, 500, 1000],
   gcash: {
     accountName: '',
@@ -254,7 +378,7 @@ export const eventConfig: EventConfig = {
     {
       id: 'hospitality',
       title: 'Hospitality partner',
-      summary: 'Help underwrite concert-day hospitality for singers and crew.',
+      summary: 'Help underwrite concert-day hospitality so artists can give their best.',
     },
     {
       id: 'print',
@@ -264,7 +388,7 @@ export const eventConfig: EventConfig = {
     {
       id: 'production',
       title: 'Production support',
-      summary: 'Help with venue logistics, tech, or hospitality needs.',
+      summary: 'Help with venue logistics, tech, or production essentials.',
     },
     {
       id: 'inkind',
@@ -273,35 +397,119 @@ export const eventConfig: EventConfig = {
     },
   ],
   thankYouList: [],
+  // DEMO PARTNERS — fictitious placeholders for layout; replace with confirmed names.
+  majorPartners: [
+    {
+      name: 'San Mateo Community Trust',
+      note: 'Major partner (sample)',
+      sample: true,
+    },
+    {
+      name: 'Aranzazu Heritage Circle',
+      note: 'Major partner (sample)',
+      sample: true,
+    },
+  ],
+  organizationSponsors: [
+    { name: 'Rizal Arts Collective', note: 'Organization sponsor (sample)', sample: true },
+    { name: 'Parish Friends of Music', note: 'Organization sponsor (sample)', sample: true },
+    { name: 'East Valley Cultural Guild', note: 'Organization sponsor (sample)', sample: true },
+  ],
+  individualSponsors: [
+    { name: 'A. Mendoza', note: 'Individual sponsor (sample)', sample: true },
+    { name: 'The Ramos Family', note: 'Individual sponsor (sample)', sample: true },
+    { name: 'C. Villanueva', note: 'Individual sponsor (sample)', sample: true },
+    { name: 'Anonymous friend of the choir', note: 'Individual sponsor (sample)', sample: true },
+  ],
   voicesIntro:
-    'The Voices of Exaltavit — singers, conductor, accompanists, and the people behind the performance. Portraits and bios will fill in as the roster is confirmed.',
-  voices: [],
-  repertoireIntro: 'An evening in song — sacred and choral works gathered for this free concert.',
+    'The Voices of Exaltavit — singers, conductor, accompanists, and the people behind the performance.',
+  voicesSampleNote: 'Sample roster — replace with confirmed names.',
+  voices: [
+    ...sampleLeadership,
+    ...sampleSopranos,
+    ...sampleAltos,
+    ...sampleTenors,
+    ...sampleBasses,
+    ...sampleProduction,
+  ],
+  repertoireIntro:
+    'An evening in song — sacred and choral works gathered for this free concert. Short blurbs below are draft placeholders, not official program notes.',
   repertoire: [
-    { title: 'Silence My Soul', highlight: true },
-    { title: 'On This Day', highlight: true },
-    { title: 'Awake My Soul' },
-    { title: 'Great God Almighty', highlight: true },
-    { title: 'Ukrainian Alleluia' },
-    { title: 'Wonderfully Made' },
-    { title: 'Shelter of Shalom' },
-    { title: 'No Mount Too High' },
-    { title: 'Ave Maria', highlight: true },
-    { title: 'Birhen ng Aranzazu', highlight: true },
+    {
+      title: 'Silence My Soul',
+      highlight: true,
+      blurb:
+        'A quiet invitation inward — stillness as the first gesture of praise. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'On This Day',
+      highlight: true,
+      blurb:
+        'A celebration of the present hour: thanksgiving for gathering, listening, and shared song. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'Awake My Soul',
+      blurb:
+        'A call to rise and sing — the soul stirred toward light, courage, and worship. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'Great God Almighty',
+      highlight: true,
+      blurb:
+        'Powerful sacred praise naming God as mighty and near. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'Ukrainian Alleluia',
+      composer: 'Craig Courtney',
+      blurb:
+        'A quiet voice of faith, praise, and hope amid suffering — Alleluia as perseverance. Draft program framing.',
+    },
+    {
+      title: 'Wonderfully Made',
+      blurb:
+        'Wonder at being created and known — gratitude sung in gentle choral color. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'Shelter of Shalom',
+      blurb:
+        'Peace as shelter: a prayer for wholeness, rest, and communal blessing. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'No Mount Too High',
+      blurb:
+        'Faith that climbs — resolve and trust when the path rises steep. Draft blurb; composer TBA.',
+    },
+    {
+      title: 'Ave Maria',
+      highlight: true,
+      blurb:
+        'Marian devotion in song — a classic prayer of greeting and petition. Draft blurb; setting TBA.',
+    },
+    {
+      title: 'Birhen ng Aranzazu',
+      highlight: true,
+      blurb:
+        'Local Marian hymn honoring Our Lady of Aranzazu, patroness of San Mateo. Draft blurb; composer TBA.',
+    },
   ],
   previewVideos: [],
   media: {
     hero: {
-      alt: 'Choir performance photo for Exaltavit',
-      label: 'Hero performance photo — awaiting organizer original',
+      // Temporary venue atmosphere (Wikimedia CC BY-SA 4.0) until a choir performance original is supplied.
+      src: '/media/shrine-facade.jpg',
+      alt: 'National Shrine and Parish of Our Lady of Aranzazu, San Mateo, Rizal',
+      label: 'Venue exterior — temporary hero; replace with choir performance photo',
+      credit: 'Photo: Ralff Nestor Nacor / Wikimedia Commons (CC BY-SA 4.0)',
     },
     ensemble: {
       alt: 'Avant Garde Singers ensemble',
       label: 'Ensemble photo — awaiting organizer original',
     },
     patroness: {
-      alt: 'Nuestra Señora de Aranzazu',
-      label: 'Patroness image — awaiting organizer original',
+      src: '/media/patroness-aranzazu.jpg',
+      alt: 'Original image of Our Lady of Aranzazu at the main altar, San Mateo',
+      label: 'Patroness image — Wikimedia Commons (CC BY-SA 4.0)',
+      credit: 'Photo: Alamat123456 / Wikimedia Commons (CC BY-SA 4.0)',
     },
   },
 }
@@ -376,6 +584,19 @@ export function hasPreviewVideos(config: EventConfig = eventConfig): boolean {
 
 export function voiceAnchorId(slug: string): string {
   return `voice-${slug}`
+}
+
+export function hasMajorPartners(config: EventConfig = eventConfig): boolean {
+  return config.majorPartners.length > 0
+}
+
+export function hasAcknowledgments(config: EventConfig = eventConfig): boolean {
+  return (
+    config.majorPartners.length > 0 ||
+    config.organizationSponsors.length > 0 ||
+    config.individualSponsors.length > 0 ||
+    config.thankYouList.length > 0
+  )
 }
 
 export function resolveVariantId(
