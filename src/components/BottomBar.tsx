@@ -3,9 +3,9 @@ type Props = {
 }
 
 const items = [
-  { href: '#support', label: 'Support' },
-  { href: '#merchandise', label: 'Merch' },
   { href: '#attend', label: 'Attend' },
+  { href: '#merchandise', label: 'Keepsakes' },
+  { href: '#support', label: 'Support' },
 ]
 
 export function BottomBar({ hidden = false }: Props) {

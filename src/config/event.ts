@@ -8,8 +8,12 @@ export type Product = {
   name: string
   pricePhp: number
   description: string
+  /** Prefer separate color + size selects when both are present */
+  colors?: ProductVariant[]
+  sizes?: ProductVariant[]
   variants: ProductVariant[]
   preorderEnabled: boolean
+  featured?: boolean
   imageSrc?: string
   imageAlt?: string
 }
@@ -23,6 +27,39 @@ export type SponsorOpportunity = {
 export type ThankYouEntry = {
   name: string
   note?: string
+}
+
+export type RepertoireItem = {
+  title: string
+  composer?: string
+  highlight?: boolean
+}
+
+export type VoiceRole = 'singer' | 'conductor' | 'accompanist' | 'production'
+
+export type Voice = {
+  slug: string
+  name: string
+  role: VoiceRole
+  roleLabel?: string
+  bio?: string
+  portraitSrc?: string
+  portraitAlt?: string
+}
+
+export type PreviewVideo = {
+  id: string
+  title: string
+  url: string
+  posterSrc?: string
+  primary?: boolean
+  pastPerformance?: boolean
+}
+
+export type MediaSlot = {
+  src?: string
+  alt: string
+  label: string
 }
 
 export type EventConfig = {
@@ -42,8 +79,14 @@ export type EventConfig = {
   privacyContact: string
   surplusCopy: string
   pickupCopy: string
+  orderDeadlineCopy: string
   sizeChartReady: boolean
-  mealAppeal: string
+  dedication: {
+    title: string
+    lead: string
+    body: string
+  }
+  patronageLead: string
   suggestedAmountsPhp: number[]
   gcash: {
     accountName: string
@@ -54,11 +97,21 @@ export type EventConfig = {
     goalPhp: number | null
     raisedPhp: number | null
     note: string
+    updatedAt?: string
   }
   products: Product[]
   sponsorOpportunities: SponsorOpportunity[]
   thankYouList: ThankYouEntry[]
-  choirIntro: string
+  voicesIntro: string
+  voices: Voice[]
+  repertoireIntro: string
+  repertoire: RepertoireItem[]
+  previewVideos: PreviewVideo[]
+  media: {
+    hero: MediaSlot
+    ensemble: MediaSlot
+    patroness: MediaSlot
+  }
 }
 
 const envSiteUrl = import.meta.env.VITE_SITE_URL?.trim() ?? ''
@@ -74,17 +127,23 @@ export const eventConfig: EventConfig = {
   venueCity: 'San Mateo, Rizal',
   timeLabel: null,
   facebookUrl: 'https://www.facebook.com/AGSingers',
-  organizerEmail: 'avantgardesingers@example.com',
-  siteUrl: envSiteUrl,
+  organizerEmail: 'avantgardesingers@gmail.com',
+  siteUrl: envSiteUrl || 'https://exaltavit.netlify.app',
   mapUrl: '',
-  privacyContact: 'avantgardesingers@example.com',
+  privacyContact: 'avantgardesingers@gmail.com',
   surplusCopy:
     'Any surplus after concert meals and production needs will support future Avant Garde Singers community programs.',
   pickupCopy:
     'Pickup details will be confirmed by email before the concert. Exact schedule and location are still being finalized.',
+  orderDeadlineCopy: 'Pre-order deadline will be announced soon. Order early so we can confirm sizes and pickup.',
   sizeChartReady: false,
-  mealAppeal:
-    'Help us feed the choir and production team on concert day. Your gift covers shared meals so singers can focus on the music.',
+  dedication: {
+    title: 'Dedication to Nuestra Señora de Aranzazu',
+    lead: 'Offered in honor of Our Lady of Aranzazu, patroness of San Mateo.',
+    body: 'Exaltavit gathers sacred and choral song beneath the shrine that bears her name — a night of praise, thanksgiving, and welcome for the parish and the wider community.',
+  },
+  patronageLead:
+    'Be part of Exaltavit. Your gift helps cover concert-day hospitality — including shared meals for the choir and crew — along with print, production, and the quiet costs that keep a free concert possible. Partners who wish to underwrite a need are warmly invited.',
   suggestedAmountsPhp: [100, 250, 500, 1000],
   gcash: {
     accountName: '',
@@ -94,7 +153,7 @@ export const eventConfig: EventConfig = {
   budget: {
     goalPhp: null,
     raisedPhp: null,
-    note: 'Progress totals will appear here once the organizer publishes verified figures.',
+    note: 'Verified totals will appear when the organizer publishes them.',
   },
   products: [
     {
@@ -102,6 +161,17 @@ export const eventConfig: EventConfig = {
       name: 'Concert Shirt',
       pricePhp: 400,
       description: 'Ivory or navy tee with gold Exaltavit mark on the front and vine artwork on the back.',
+      featured: true,
+      colors: [
+        { id: 'ivory', label: 'Ivory' },
+        { id: 'navy', label: 'Navy' },
+      ],
+      sizes: [
+        { id: 's', label: 'S' },
+        { id: 'm', label: 'M' },
+        { id: 'l', label: 'L' },
+        { id: 'xl', label: 'XL' },
+      ],
       variants: [
         { id: 'shirt-ivory-s', label: 'Ivory / S' },
         { id: 'shirt-ivory-m', label: 'Ivory / M' },
@@ -121,6 +191,11 @@ export const eventConfig: EventConfig = {
       name: 'Tote Bag',
       pricePhp: 180,
       description: 'Carry the concert identity — thorn, rose, apple, and star on ivory or navy canvas.',
+      featured: true,
+      colors: [
+        { id: 'ivory', label: 'Ivory' },
+        { id: 'navy', label: 'Navy' },
+      ],
       variants: [
         { id: 'tote-ivory', label: 'Ivory' },
         { id: 'tote-navy', label: 'Navy' },
@@ -171,9 +246,9 @@ export const eventConfig: EventConfig = {
   ],
   sponsorOpportunities: [
     {
-      id: 'meal',
-      title: 'Meal sponsor',
-      summary: 'Underwrite choir and crew meals for concert day.',
+      id: 'hospitality',
+      title: 'Hospitality partner',
+      summary: 'Help underwrite concert-day hospitality for singers and crew.',
     },
     {
       id: 'print',
@@ -192,8 +267,37 @@ export const eventConfig: EventConfig = {
     },
   ],
   thankYouList: [],
-  choirIntro:
-    'Avant Garde Singers is preparing Exaltavit as a night of sacred and choral music offered freely to the community. A fuller choir story and photos will appear here before launch.',
+  voicesIntro:
+    'The Voices of Exaltavit — singers, conductor, accompanists, and the people behind the performance. Portraits and bios will fill in as the roster is confirmed.',
+  voices: [],
+  repertoireIntro: 'An evening in song — sacred and choral works gathered for this free concert.',
+  repertoire: [
+    { title: 'Silence My Soul', highlight: true },
+    { title: 'On This Day', highlight: true },
+    { title: 'Awake My Soul' },
+    { title: 'Great God Almighty', highlight: true },
+    { title: 'Ukrainian Alleluia' },
+    { title: 'Wonderfully Made' },
+    { title: 'Shelter of Shalom' },
+    { title: 'No Mount Too High' },
+    { title: 'Ave Maria', highlight: true },
+    { title: 'Birhen ng Aranzazu', highlight: true },
+  ],
+  previewVideos: [],
+  media: {
+    hero: {
+      alt: 'Choir performance photo for Exaltavit',
+      label: 'Hero performance photo — awaiting organizer original',
+    },
+    ensemble: {
+      alt: 'Avant Garde Singers ensemble',
+      label: 'Ensemble photo — awaiting organizer original',
+    },
+    patroness: {
+      alt: 'Nuestra Señora de Aranzazu',
+      label: 'Patroness image — awaiting organizer original',
+    },
+  },
 }
 
 export function formatPhp(amount: number): string {
@@ -228,6 +332,14 @@ export function getOrderableProducts(config: EventConfig = eventConfig): Product
   return config.products.filter((product) => product.preorderEnabled && product.variants.length > 0)
 }
 
+export function getFeaturedProducts(config: EventConfig = eventConfig): Product[] {
+  return getOrderableProducts(config).filter((product) => product.featured)
+}
+
+export function getAccessoryProducts(config: EventConfig = eventConfig): Product[] {
+  return getOrderableProducts(config).filter((product) => !product.featured)
+}
+
 export function isMerchReady(config: EventConfig = eventConfig): boolean {
   return getOrderableProducts(config).length > 0
 }
@@ -241,4 +353,40 @@ export function getShareUrl(config: EventConfig = eventConfig): string {
   if (config.siteUrl.trim()) return config.siteUrl.trim()
   if (typeof window !== 'undefined') return window.location.href.split('#')[0]
   return ''
+}
+
+export function getHighlightRepertoire(config: EventConfig = eventConfig): RepertoireItem[] {
+  const highlights = config.repertoire.filter((item) => item.highlight)
+  return highlights.length > 0 ? highlights : config.repertoire.slice(0, 4)
+}
+
+export function getPrimaryPreview(config: EventConfig = eventConfig): PreviewVideo | undefined {
+  return config.previewVideos.find((video) => video.primary && video.url.trim()) ?? config.previewVideos.find((video) => video.url.trim())
+}
+
+export function hasPreviewVideos(config: EventConfig = eventConfig): boolean {
+  return config.previewVideos.some((video) => video.url.trim())
+}
+
+export function voiceAnchorId(slug: string): string {
+  return `voice-${slug}`
+}
+
+export function resolveVariantId(
+  product: Product,
+  colorId?: string,
+  sizeId?: string,
+): string {
+  if (product.colors?.length && product.sizes?.length) {
+    const color = colorId ?? product.colors[0]?.id
+    const size = sizeId ?? product.sizes[0]?.id
+    const match = product.variants.find((variant) => variant.id === `${product.id}-${color}-${size}`)
+    return match?.id ?? product.variants[0]?.id ?? ''
+  }
+  if (product.colors?.length && !product.sizes?.length) {
+    const color = colorId ?? product.colors[0]?.id
+    const match = product.variants.find((variant) => variant.id === `${product.id}-${color}` || variant.id.endsWith(`-${color}`))
+    return match?.id ?? product.variants[0]?.id ?? ''
+  }
+  return product.variants[0]?.id ?? ''
 }

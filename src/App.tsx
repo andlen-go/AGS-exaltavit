@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { Attend } from './components/Attend'
 import { BottomBar } from './components/BottomBar'
-import { Choir } from './components/Choir'
+import { Dedication } from './components/Dedication'
 import { Footer } from './components/Footer'
-import { Funding } from './components/Funding'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { Merchandise } from './components/Merchandise'
-import { Sponsorship } from './components/Sponsorship'
+import { Patronage } from './components/Patronage'
+import { Preview } from './components/Preview'
+import { Repertoire } from './components/Repertoire'
 import { ThankYou } from './components/ThankYou'
+import { Voices } from './components/Voices'
 
 export default function App() {
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -18,10 +20,12 @@ export default function App() {
       <Header />
       <main>
         <Hero />
-        <Funding onSheetOpenChange={setSheetOpen} />
+        <Dedication />
+        <Preview />
+        <Voices />
+        <Repertoire />
         <Merchandise onSheetOpenChange={setSheetOpen} />
-        <Sponsorship />
-        <Choir />
+        <Patronage onSheetOpenChange={setSheetOpen} />
         <Attend />
         <ThankYou />
       </main>
