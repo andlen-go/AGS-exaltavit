@@ -1,0 +1,52 @@
+# Local dev stack: https://dev.exaltavit.com
+# TLS terminates at the gateway on EXALTAVIT_BIND_IP (127.0.0.3 by default so it
+# doesn't collide with other local gateways on 127.0.0.1 / 127.0.0.2).
+# Run via .\dev.ps1 start
+
+name: exaltavit
+
+services:
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    environment:
+      VITE_DEV_HTTPS: "false"
+      VITE_USE_POLLING: "true"
+      VITE_SITE_URL: https://dev.exaltavit.com
+    command:
+      - sh
+      - -c
+      - |
+        if ! cmp -s package-lock.json node_modules/.lock-stamp; then
+          npm ci && cp package-lock.json node_modules/.lock-stamp
+        fi
+        exec npm run dev
+    volumes:
+      - type: bind
+        source: .
+        target: /app
+      - type: volume
+        source: node_modules
+        target: /app/node_modules
+    expose:
+      - "5179"
+
+  gateway:
+    image: nginx:1.27-alpine
+    depends_on:
+      - web
+    ports:
+      - "${EXALTAVIT_BIND_IP:-127.0.0.3}:80:80"
+      - "${EXALTAVIT_BIND_IP:-127.0.0.3}:443:443"
+    volumes:
+      - type: bind
+        source: ./docker/gateway/nginx-ssl.conf
+        target: /etc/nginx/conf.d/default.conf
+        read_only: true
+      - type: bind
+        source: ./certs
+        target: /etc/nginx/certs
+        read_only: true
+
+volumes:
+  node_modules:

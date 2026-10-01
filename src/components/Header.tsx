@@ -1,4 +1,5 @@
 import { eventConfig } from '../config/event'
+import { useSupportDrawer } from '../hooks/useSupportDrawer'
 import { Button } from './ui'
 
 const links = [
@@ -10,6 +11,8 @@ const links = [
 ]
 
 export function Header() {
+  const { openDrawer } = useSupportDrawer()
+
   return (
     <header className="sticky top-0 z-40 border-b border-navy/10 bg-ivory/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -29,23 +32,18 @@ export function Header() {
               {link.label}
             </a>
           ))}
-          <Button
-            type="button"
-            variant="gold"
-            className="!py-2"
-            onClick={() => {
-              document.querySelector('#support')?.scrollIntoView({ behavior: 'smooth' })
-            }}
-          >
+          <Button type="button" variant="gold" className="!py-2" onClick={openDrawer} aria-haspopup="dialog">
             Support
           </Button>
         </nav>
-        <a
-          href="#support"
+        <button
+          type="button"
+          onClick={openDrawer}
+          aria-haspopup="dialog"
           className="rounded-sm bg-gold px-3 py-2 text-xs font-semibold tracking-wide text-ivory lg:hidden"
         >
           Support
-        </a>
+        </button>
       </div>
     </header>
   )

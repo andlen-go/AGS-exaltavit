@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   eventConfig,
   formatPhp,
@@ -6,30 +6,18 @@ import {
   isOrganizerEmailReady,
   isProgressReady,
 } from '../config/event'
+import { useSupportDrawer } from '../hooks/useSupportDrawer'
 import { copyText, formatEmailPackage, makeRecordId, openMailto, type MailtoPayload } from '../lib/mailto'
 import { MailtoActions } from './MediaPlaceholder'
 import { Button, Field, Input, Notice, Section, Select, Textarea } from './ui'
 
-type Props = {
-  onSheetOpenChange?: (open: boolean) => void
-}
-
-export function Patronage({ onSheetOpenChange }: Props) {
+export function Patronage() {
   const gcashReady = isGCashReady()
   const progressReady = isProgressReady()
   const emailReady = isOrganizerEmailReady()
+  const { openDrawer } = useSupportDrawer()
 
-  const [giftOpen, setGiftOpen] = useState(false)
   const [partnerOpen, setPartnerOpen] = useState(false)
-
-  const [amount, setAmount] = useState(eventConfig.suggestedAmountsPhp[1] ?? 250)
-  const [customAmount, setCustomAmount] = useState('')
-  const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
-  const [message, setMessage] = useState('')
-  const [recognize, setRecognize] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const [partnerName, setPartnerName] = useState('')
   const [partnerContact, setPartnerContact] = useState('')
@@ -39,38 +27,6 @@ export function Patronage({ onSheetOpenChange }: Props) {
   const [partnerRecognize, setPartnerRecognize] = useState(false)
   const [partnerStatus, setPartnerStatus] = useState<string | null>(null)
   const [partnerError, setPartnerError] = useState<string | null>(null)
-
-  const selectedAmount = useMemo(() => {
-    if (customAmount.trim()) {
-      const parsed = Number(customAmount)
-      return Number.isFinite(parsed) ? parsed : 0
-    }
-    return amount
-  }, [amount, customAmount])
-
-  function buildGiftPayload(): MailtoPayload | null {
-    if (!selectedAmount || selectedAmount < 1) {
-      setError('Enter a gift amount of at least ₱1.')
-      return null
-    }
-    const recordId = makeRecordId('GIFT')
-    const subject = `[Exaltavit Gift] ${recordId} — ${formatPhp(selectedAmount)}`
-    const body = [
-      'Exaltavit patronage gift',
-      `Record ID: ${recordId}`,
-      `Amount: ${formatPhp(selectedAmount)}`,
-      `Name: ${name.trim() || '(not provided)'}`,
-      `Contact: ${contact.trim() || '(not provided)'}`,
-      `Message: ${message.trim() || '(none)'}`,
-      `Public recognition consent: ${recognize ? 'yes' : 'no'}`,
-      '',
-      gcashReady
-        ? 'I have transferred (or will transfer) this amount via GCash as instructed on the site.'
-        : 'Please reply with transfer instructions for this gift.',
-      `Timezone reference: ${eventConfig.timezone}`,
-    ].join('\n')
-    return { to: eventConfig.organizerEmail, subject, body }
-  }
 
   function buildPartnerPayload(): MailtoPayload | null {
     if (!partnerName.trim() || !partnerContact.trim() || !proposal.trim()) {
@@ -94,25 +50,6 @@ export function Patronage({ onSheetOpenChange }: Props) {
       proposal.trim(),
     ].join('\n')
     return { to: eventConfig.organizerEmail, subject, body }
-  }
-
-  async function openGiftDraft() {
-    setError(null)
-    setStatus(null)
-    const payload = buildGiftPayload()
-    if (!payload) return
-    openMailto(payload)
-    setStatus('Your email draft should open. Nothing is sent until you press send in your mail app.')
-    onSheetOpenChange?.(false)
-  }
-
-  async function copyGiftMessage() {
-    setError(null)
-    setStatus(null)
-    const payload = buildGiftPayload()
-    if (!payload) return
-    const ok = await copyText(formatEmailPackage(payload))
-    setStatus(ok ? 'Message copied. Paste it into your email app when ready.' : 'Could not copy — try Open email draft.')
   }
 
   async function openPartnerDraft() {
@@ -168,74 +105,9 @@ export function Patronage({ onSheetOpenChange }: Props) {
           <p className="text-sm leading-relaxed text-navy/70">{eventConfig.surplusCopy}</p>
 
           {emailReady ? (
-            <>
-              {!giftOpen ? (
-                <Button type="button" variant="gold" onClick={() => setGiftOpen(true)}>
-                  Send a gift note
-                </Button>
-              ) : (
-                <div className="space-y-4 border-t border-navy/10 pt-6">
-                  <p className="text-sm font-medium text-navy">Suggested amounts</p>
-                  <div className="flex flex-wrap gap-2">
-                    {eventConfig.suggestedAmountsPhp.map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => {
-                          setAmount(value)
-                          setCustomAmount('')
-                        }}
-                        className={`border px-4 py-2 text-sm font-semibold transition ${
-                          !customAmount && amount === value
-                            ? 'border-gold bg-gold/15 text-navy'
-                            : 'border-navy/15 text-navy/80 hover:border-navy/35'
-                        }`}
-                      >
-                        {formatPhp(value)}
-                      </button>
-                    ))}
-                  </div>
-                  <Field label="Custom amount (PHP)">
-                    <Input
-                      inputMode="numeric"
-                      placeholder="e.g. 750"
-                      value={customAmount}
-                      onChange={(event) => setCustomAmount(event.target.value.replace(/[^\d]/g, ''))}
-                    />
-                  </Field>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Name (optional)">
-                      <Input value={name} onChange={(event) => setName(event.target.value)} />
-                    </Field>
-                    <Field label="Contact (optional)" hint="Email or mobile">
-                      <Input value={contact} onChange={(event) => setContact(event.target.value)} />
-                    </Field>
-                  </div>
-                  <Field label="Message (optional)">
-                    <Textarea value={message} onChange={(event) => setMessage(event.target.value)} />
-                  </Field>
-                  <label className="flex items-start gap-3 text-sm text-navy/80">
-                    <input
-                      type="checkbox"
-                      checked={recognize}
-                      onChange={(event) => setRecognize(event.target.checked)}
-                      className="mt-1"
-                    />
-                    <span>You may list my first name publicly among supporters (off by default).</span>
-                  </label>
-                  {error ? <Notice tone="warn">{error}</Notice> : null}
-                  {status ? <Notice tone="success">{status}</Notice> : null}
-                  <MailtoActions onOpenDraft={openGiftDraft} onCopyMessage={copyGiftMessage} />
-                  <button
-                    type="button"
-                    className="text-sm text-navy/55 hover:text-navy"
-                    onClick={() => setGiftOpen(false)}
-                  >
-                    Hide form
-                  </button>
-                </div>
-              )}
-            </>
+            <Button type="button" variant="gold" onClick={openDrawer}>
+              Send a gift note
+            </Button>
           ) : (
             <p className="text-sm text-navy/65">
               Contact the organizer via{' '}

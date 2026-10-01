@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { eventConfig, hasMajorPartners } from '../config/event'
 
 /** Compact major-partner strip — desktop top banner + mobile under header. Sample partners are fictitious. */
@@ -38,17 +39,42 @@ export function MajorPartners() {
   )
 }
 
-/** Desktop sticky side rail highlighting major partners while scrolling the hero. */
+/** Sticky side rail highlighting major partners. Wide screens show the card; narrower screens a tab that expands it. */
 export function MajorPartnersRail() {
+  const [expanded, setExpanded] = useState(false)
   if (!hasMajorPartners()) return null
 
   return (
     <aside
-      className="pointer-events-none fixed top-1/2 right-0 z-30 hidden -translate-y-1/2 xl:block"
+      className="pointer-events-none fixed top-1/2 right-0 z-30 -translate-y-1/2"
       aria-label="Major partners rail"
     >
-      <div className="pointer-events-auto mr-3 w-[11.5rem] border border-gold/35 bg-navy/95 px-4 py-5 text-ivory shadow-lg backdrop-blur-sm">
-        <p className="text-[10px] font-semibold tracking-[0.2em] text-gold-soft uppercase">Major partners</p>
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        aria-expanded={expanded}
+        className={`pointer-events-auto border border-r-0 border-navy/25 bg-gold-soft px-2.5 py-4 text-[10px] font-semibold tracking-[0.2em] text-navy uppercase shadow-lg [writing-mode:vertical-rl] rotate-180 hover:bg-ivory xl:hidden ${
+          expanded ? 'hidden' : ''
+        }`}
+      >
+        Partners
+      </button>
+      <div
+        className={`pointer-events-auto mr-3 w-[11.5rem] border border-gold-soft/70 bg-navy/95 ring-1 ring-ivory/10 px-4 py-5 text-ivory shadow-lg backdrop-blur-sm xl:block ${
+          expanded ? 'block' : 'hidden'
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[10px] font-semibold tracking-[0.2em] text-gold-soft uppercase">Major partners</p>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            aria-label="Collapse major partners"
+            className="-mt-1 -mr-1 px-1 text-sm leading-none text-ivory/60 hover:text-ivory xl:hidden"
+          >
+            ×
+          </button>
+        </div>
         <ul className="mt-3 space-y-3">
           {eventConfig.majorPartners.map((partner) => (
             <li key={partner.name}>

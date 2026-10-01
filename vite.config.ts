@@ -11,10 +11,11 @@ const keyPath = path.join(certDir, 'dev.exaltavit.com-key.pem')
 const certPath = path.join(certDir, 'dev.exaltavit.com.pem')
 
 const certsPresent = fs.existsSync(keyPath) && fs.existsSync(certPath)
+const httpsEnv = process.env.VITE_DEV_HTTPS
+const httpsDisabled = httpsEnv === 'false' || httpsEnv === '0'
 const wantHttps =
-  process.env.VITE_DEV_HTTPS === 'true' ||
-  process.env.VITE_DEV_HTTPS === '1' ||
-  certsPresent
+  !httpsDisabled && (httpsEnv === 'true' || httpsEnv === '1' || certsPresent)
+const usePolling = process.env.VITE_USE_POLLING === 'true'
 
 function resolveHttps(): ServerOptions['https'] {
   if (!wantHttps) return undefined
@@ -44,6 +45,7 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: ['dev.exaltavit.com', 'localhost'],
     https: resolveHttps(),
+    watch: usePolling ? { usePolling: true, interval: 300 } : undefined,
   },
   preview: {
     host: true,

@@ -8,12 +8,29 @@ Stack: **Vite + React + TypeScript + Tailwind**. Fully static. No database, auth
 
 | Environment | URL | How it updates |
 | --- | --- | --- |
-| **Local (HTTPS)** | [https://dev.exaltavit.com:5179/](https://dev.exaltavit.com:5179/) | `npm run dev` with mkcert certs (or Caddy on `:443`) |
+| **Local (Docker)** | [https://dev.exaltavit.com/](https://dev.exaltavit.com/) | `.\dev.ps1 start` — Vite in Docker behind an nginx TLS gateway |
+| **Local (HTTPS, no Docker)** | [https://dev.exaltavit.com:5179/](https://dev.exaltavit.com:5179/) | `npm run dev` with mkcert certs |
 | **Staging** | [https://exaltavit.netlify.app/](https://exaltavit.netlify.app/) | Push or merge to `main` (Netlify production branch) |
 
 Full Windows + WSL walkthrough (hosts, mkcert, Caddy): see the Project doc `docs/local-setup-guide.md`.
 
-## Run locally (Windows + WSL) with trusted HTTPS
+## Run locally with Docker (recommended)
+
+Same pattern as the local IOMAD stack: `compose.yaml` runs Vite in a `web` container and an nginx `gateway` container that terminates TLS with the mkcert certs (`docker/gateway/nginx-ssl.conf`). The gateway binds **127.0.0.3:80/443** so it can run alongside other local gateways on 127.0.0.1 / 127.0.0.2.
+
+Prerequisites: Docker Desktop and mkcert (`scoop install mkcert`).
+
+```powershell
+.\dev.ps1 setup     # one-time: certs, hosts entry "127.0.0.3  dev.exaltavit.com" (UAC), start
+.\dev.ps1 start     # https://dev.exaltavit.com/
+.\dev.ps1 stop
+.\dev.ps1 logs web
+.\dev.ps1 build     # tsc + vite build inside the container
+```
+
+Hot reload works through the gateway (file watching uses polling inside the container). Override the bind address with `$env:EXALTAVIT_BIND_IP`.
+
+## Run locally without Docker (Windows + WSL) with trusted HTTPS
 
 Clone path (Windows): `C:\Users\ARGO\Projects\AGS-exaltavit`  
 WSL path: `/mnt/c/Users/ARGO/Projects/AGS-exaltavit`

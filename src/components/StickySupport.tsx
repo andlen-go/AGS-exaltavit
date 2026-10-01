@@ -1,20 +1,37 @@
+import { useSupportDrawer } from '../hooks/useSupportDrawer'
+import { StarMotif } from './ui'
+
 type Props = {
   hidden?: boolean
 }
 
-/** Persistent desktop sticky Support chip — scrolls to #support. Mobile uses BottomBar. */
+/** Desktop chat-style Support button (bottom right) — toggles the support panel. Mobile uses BottomBar. */
 export function StickySupport({ hidden = false }: Props) {
+  const { open, openDrawer, closeDrawer } = useSupportDrawer()
   if (hidden) return null
 
   return (
-    <a
-      href="#support"
-      className="fixed top-1/2 left-0 z-30 hidden -translate-y-1/2 md:block"
-      aria-label="Support Exaltavit"
+    <button
+      type="button"
+      onClick={open ? closeDrawer : openDrawer}
+      aria-expanded={open}
+      aria-haspopup="dialog"
+      aria-label={open ? 'Close support form' : 'Support Exaltavit'}
+      className="fixed right-6 bottom-6 z-[60] hidden items-center gap-2 rounded-full border border-gold/50 bg-gold py-3 pr-5 pl-4 text-sm font-semibold tracking-wide text-ivory shadow-xl transition hover:bg-gold-soft md:inline-flex"
     >
-      <span className="inline-flex items-center gap-2 border border-gold/50 bg-gold px-3 py-4 text-[11px] font-semibold tracking-[0.2em] text-ivory uppercase shadow-lg [writing-mode:vertical-rl] rotate-180 hover:bg-gold-soft">
-        Support Exaltavit
-      </span>
-    </a>
+      {open ? (
+        <>
+          <span aria-hidden="true" className="text-lg leading-none">
+            ×
+          </span>
+          Close
+        </>
+      ) : (
+        <>
+          <StarMotif className="h-4 w-4" />
+          Support Exaltavit
+        </>
+      )}
+    </button>
   )
 }
