@@ -9,6 +9,60 @@
   --color-ivory-deep: #ebe3d4;
   --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --font-sans: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --ease-elegant: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 220ms;
+  --default-transition-timing-function: var(--ease-elegant);
+  --animate-cart-bump: cart-bump 0.5s ease-out;
+  --animate-pop-in: pop-in 0.38s var(--ease-elegant) both;
+  --animate-overlay-in: soft-fade 0.25s ease both;
+  --animate-notice-in: notice-in 0.35s var(--ease-elegant) both;
+  --animate-voice-in: voice-in 0.5s var(--ease-elegant) backwards;
+
+  @keyframes voice-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes notice-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes cart-bump {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(1.35) rotate(-8deg);
+    }
+    65% {
+      transform: scale(0.92);
+    }
+  }
 }
 
 @layer base {
@@ -32,6 +86,10 @@
   :focus-visible {
     outline: 2px solid var(--color-gold);
     outline-offset: 3px;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -100,13 +158,37 @@
 
 .ornament-line {
   transform-origin: left center;
-  animation: draw-line 1s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+}
+
+/* Hairline underline that grows from the left on hover. */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition:
+    background-size 0.35s var(--ease-elegant),
+    color 0.2s ease;
+}
+
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
 
   .animate-rise,
   .animate-fade,

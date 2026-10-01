@@ -1,6 +1,6 @@
 import { eventConfig, getTimeDisplay, hasPreviewVideos } from '../config/event'
 import { MediaPlaceholder } from './MediaPlaceholder'
-import { Button, StarMotif } from './ui'
+import { BrandLogo, Button } from './ui'
 
 export function Hero() {
   const heroSrc = eventConfig.media.hero.src
@@ -27,13 +27,23 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/88 to-navy/55" aria-hidden="true" />
       <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/25 to-navy/45" aria-hidden="true" />
       <div className="absolute inset-0 bg-navy/25" aria-hidden="true" />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-[8%] hidden items-center opacity-[0.12] lg:flex"
+        aria-hidden="true"
+      >
+        <BrandLogo className="animate-fade h-[60%] w-auto" decorative />
+      </div>
 
       <div className="relative mx-auto flex min-h-[92dvh] max-w-[1180px] flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20 lg:px-8">
         <div className="max-w-xl text-ivory">
-          <p className="animate-fade mb-4 flex items-center gap-2 text-xs font-semibold tracking-[0.28em] text-gold-soft uppercase">
-            <StarMotif className="h-3 w-3 text-gold-soft" />
-            {eventConfig.organizer}
-          </p>
+          <div className="animate-fade mb-5 flex items-center gap-3">
+            <BrandLogo className="h-14 w-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]" decorative />
+            <span className="h-10 w-px bg-gold-soft/40" aria-hidden="true" />
+            <p className="text-xs font-semibold tracking-[0.28em] text-gold-soft uppercase">
+              <span className="block text-[10px] tracking-[0.24em] text-ivory/55">Presents</span>
+              {eventConfig.organizer}
+            </p>
+          </div>
           <h1 className="animate-rise font-display text-6xl leading-[0.95] tracking-tight uppercase sm:text-7xl md:text-8xl">
             {eventConfig.title}
           </h1>

@@ -1,3 +1,5 @@
+import { useSupportDrawer } from '../hooks/useSupportDrawer'
+
 type Props = {
   hidden?: boolean
 }
@@ -5,10 +7,13 @@ type Props = {
 const items = [
   { href: '#attend', label: 'Attend' },
   { href: '#merchandise', label: 'Keepsakes' },
-  { href: '#support', label: 'Support' },
 ]
 
+const itemClass =
+  'flex w-full items-center justify-center rounded-sm px-2 py-2.5 text-sm font-semibold text-navy hover:bg-navy/5'
+
 export function BottomBar({ hidden = false }: Props) {
+  const { openDrawer } = useSupportDrawer()
   if (hidden) return null
 
   return (
@@ -19,14 +24,16 @@ export function BottomBar({ hidden = false }: Props) {
       <ul className="safe-pb grid grid-cols-3 gap-1 px-2 pt-2">
         {items.map((item) => (
           <li key={item.href}>
-            <a
-              href={item.href}
-              className="flex items-center justify-center rounded-sm px-2 py-2.5 text-sm font-semibold text-navy hover:bg-navy/5"
-            >
+            <a href={item.href} className={itemClass}>
               {item.label}
             </a>
           </li>
         ))}
+        <li>
+          <button type="button" onClick={openDrawer} className={itemClass} aria-haspopup="dialog">
+            Support
+          </button>
+        </li>
       </ul>
     </nav>
   )

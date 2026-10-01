@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="San Mateo Community Trust logo (sample)">
+  <rect width="64" height="64" rx="12" fill="#2f5d50"/>
+  <path d="M32 9 50 16v14c0 12-8 20-18 25-10-5-18-13-18-25V16Z" fill="none" stroke="#e8d3a6" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M19 38 27 27l5 6 6-10 8 15Z" fill="#e8d3a6"/>
+  <circle cx="40" cy="21" r="2.6" fill="#f7f2e9"/>
+  <path d="M22 43h20" stroke="#f7f2e9" stroke-width="2" stroke-linecap="round"/>
+</svg>
