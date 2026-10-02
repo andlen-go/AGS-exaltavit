@@ -10,7 +10,7 @@ export function Footer() {
     <footer className="border-t border-navy/10 bg-navy px-4 py-14 text-ivory sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1180px]">
         <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr]">
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-4">
               <BrandLogo className="h-20 w-auto" />
               <div>

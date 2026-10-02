@@ -10,7 +10,7 @@ type Network = {
   icon: ReactNode
   /** App deep link — only shown on small screens where the app is likely installed */
   mobileOnly?: boolean
-  /** Hidden on phones when the native share sheet is available, to keep the row on one line */
+  /** Hidden on phones when the native share sheet is available, to keep the row compact */
   coveredByNativeShare?: boolean
 }
 
@@ -170,15 +170,15 @@ export function ShareBar({ tone = 'light', className = '' }: Props) {
   }
 
   const ring = tone === 'dark' ? 'ring-ivory/20 hover:ring-ivory/60' : 'ring-navy/10 hover:ring-navy/30'
-  const iconButton = `flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm ring-1 transition hover:-translate-y-0.5 ${ring}`
+  const iconButton = `flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white shadow-sm ring-1 transition hover:-translate-y-0.5 sm:h-9 sm:w-9 ${ring}`
 
   return (
-    <div className={`flex flex-nowrap items-center gap-2 ${className}`}>
+    <div className={`flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2 ${className}`}>
       {canNativeShare ? (
         <button
           type="button"
           onClick={nativeShare}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-gold px-3.5 text-sm font-semibold text-ivory shadow-sm hover:bg-gold-soft"
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-gold px-3 text-sm font-semibold text-ivory shadow-sm hover:bg-gold-soft sm:h-9 sm:px-3.5"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
