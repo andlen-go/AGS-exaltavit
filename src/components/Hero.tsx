@@ -44,7 +44,7 @@ export function Hero() {
               {eventConfig.organizer}
             </p>
           </div>
-          <h1 className="animate-rise font-display text-6xl leading-[0.95] tracking-tight uppercase sm:text-7xl md:text-8xl">
+          <h1 className="animate-rise font-display text-[clamp(2.5rem,15vw,3.75rem)] leading-[0.95] tracking-tight uppercase sm:text-7xl md:text-8xl">
             {eventConfig.title}
           </h1>
           <p className="animate-rise-delay-1 mt-5 text-base leading-relaxed text-ivory/90 sm:text-lg">

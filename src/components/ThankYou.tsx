@@ -15,21 +15,25 @@ function SponsorList({
   return (
     <div className="mb-12 last:mb-0">
       <h3 className="font-display text-2xl text-navy sm:text-3xl">{title}</h3>
-      <ul className={`mt-6 grid gap-5 sm:grid-cols-2 ${large ? '' : 'lg:grid-cols-3'}`}>
+      <ul className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${large ? '' : 'lg:grid-cols-3'}`}>
         {entries.map((entry) => (
           <li
             key={entry.name}
-            className={`flex gap-4 rounded-md border bg-ivory/70 shadow-sm ${
-              large ? 'border-gold/40 p-6' : 'border-navy/10 p-5'
+            className={`flex min-w-0 gap-4 rounded-md border bg-ivory/70 shadow-sm ${
+              large ? 'border-gold/40 p-5 sm:p-6' : 'border-navy/10 p-5'
             }`}
           >
             <SponsorBadge
               name={entry.name}
               logoSrc={entry.logoSrc}
-              className={large ? 'h-16 w-16 sm:h-20 sm:w-20' : 'h-12 w-12'}
+              className={large ? 'h-12 w-12 sm:h-20 sm:w-20' : 'h-12 w-12'}
             />
             <div className="min-w-0">
-              <p className={large ? 'font-display text-3xl leading-tight text-navy' : 'font-display text-xl leading-snug text-navy'}>
+              <p
+                className={`break-words font-display text-navy ${
+                  large ? 'text-2xl leading-tight sm:text-3xl' : 'text-xl leading-snug'
+                }`}
+              >
                 {entry.name}
               </p>
               {entry.sample ? (
