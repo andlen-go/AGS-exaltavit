@@ -29,3 +29,6 @@ certs/*
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify

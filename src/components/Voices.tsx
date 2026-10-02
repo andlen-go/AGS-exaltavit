@@ -6,7 +6,7 @@ import {
   type Voice,
   type VoiceSection,
 } from '../config/event'
-import { copyText } from '../lib/mailto'
+import { copyText } from '../lib/clipboard'
 import { MediaPlaceholder } from './MediaPlaceholder'
 import { Button, Section } from './ui'
 

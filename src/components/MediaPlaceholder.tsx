@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
 
 /** Labeled media placeholder until organizer supplies a photo */
 export function MediaPlaceholder({
@@ -36,35 +36,44 @@ export function MediaPlaceholder({
   )
 }
 
-export function MailtoActions({
-  onOpenDraft,
-  onCopyMessage,
-  openLabel = 'Open email draft',
-  copyLabel = 'Copy message',
+export function SubmitButton({
+  onClick,
+  sending,
+  label = 'Send',
   className = '',
 }: {
-  onOpenDraft: () => void
-  onCopyMessage: () => void
-  openLabel?: string
-  copyLabel?: string
+  onClick: () => void
+  sending: boolean
+  label?: string
   className?: string
 }) {
   return (
-    <div className={`flex flex-wrap gap-3 ${className}`}>
-      <button
-        type="button"
-        onClick={onOpenDraft}
-        className="inline-flex items-center justify-center gap-2 rounded-sm bg-gold px-5 py-2.5 text-sm font-semibold tracking-wide text-ivory transition hover:bg-gold-soft"
-      >
-        {openLabel}
-      </button>
-      <button
-        type="button"
-        onClick={onCopyMessage}
-        className="inline-flex items-center justify-center gap-2 rounded-sm border border-navy/25 bg-transparent px-5 py-2.5 text-sm font-semibold tracking-wide text-navy transition hover:border-navy/50 hover:bg-ivory-deep/60"
-      >
-        {copyLabel}
-      </button>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={sending}
+      aria-busy={sending}
+      className={`inline-flex items-center justify-center gap-2 rounded-sm bg-gold px-5 py-2.5 text-sm font-semibold tracking-wide text-ivory transition hover:bg-gold-soft disabled:cursor-wait disabled:opacity-70 ${className}`}
+    >
+      {sending ? (
+        <span
+          className="h-4 w-4 animate-spin rounded-full border-2 border-ivory/40 border-t-ivory"
+          aria-hidden="true"
+        />
+      ) : null}
+      {sending ? 'Sending…' : label}
+    </button>
+  )
+}
+
+/** Off-screen field that humans never see; bots that fill it are silently ignored by the server. */
+export function HoneypotField(props: { value: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <div aria-hidden="true" className="sr-only">
+      <label>
+        Company website
+        <input type="text" name="company_website" tabIndex={-1} autoComplete="off" {...props} />
+      </label>
     </div>
   )
 }

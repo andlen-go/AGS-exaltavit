@@ -143,7 +143,8 @@ export type EventConfig = {
   }
 }
 
-const envSiteUrl = import.meta.env.VITE_SITE_URL?.trim() ?? ''
+// import.meta.env is undefined when Netlify Functions import this module outside Vite.
+const envSiteUrl = import.meta.env?.VITE_SITE_URL?.trim() ?? ''
 
 /** Demo-only sample singers — replace with confirmed names before publishing as final. */
 const sampleSopranos: Voice[] = [
@@ -615,11 +616,6 @@ export function getAccessoryProducts(config: EventConfig = eventConfig): Product
 
 export function isMerchReady(config: EventConfig = eventConfig): boolean {
   return getOrderableProducts(config).length > 0
-}
-
-export function isOrganizerEmailReady(config: EventConfig = eventConfig): boolean {
-  const email = config.organizerEmail.trim()
-  return Boolean(email) && !email.endsWith('@example.com')
 }
 
 export function getShareUrl(config: EventConfig = eventConfig): string {

@@ -3,12 +3,13 @@ import {
   eventConfig,
   formatPhp,
   isGCashReady,
-  isOrganizerEmailReady,
   isProgressReady,
 } from '../config/event'
+import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
 import { useSupportDrawer } from '../hooks/useSupportDrawer'
-import { copyText, formatEmailPackage, makeRecordId, openMailto, type MailtoPayload } from '../lib/mailto'
-import { MailtoActions } from './MediaPlaceholder'
+import { copyText } from '../lib/clipboard'
+import { isValidEmail, isValidMobile, type PartnerData } from '../shared/forms'
+import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Button, Collapse, Field, Input, LineIcon, Notice, Section, Select, Textarea, type IconName } from './ui'
 
 const VALUE_ICONS: IconName[] = ['door', 'stage', 'cup']
@@ -23,13 +24,16 @@ const OPPORTUNITY_ICONS: Record<string, IconName> = {
 export function Patronage() {
   const gcashReady = isGCashReady()
   const progressReady = isProgressReady()
-  const emailReady = isOrganizerEmailReady()
+  const giftReady = useFormEnabled('gift')
+  const partnerReady = useFormEnabled('partner')
+  const { submit, sending, honeypotProps } = useFormSubmit('partner')
   const { openDrawer } = useSupportDrawer()
 
   const [partnerOpen, setPartnerOpen] = useState(false)
 
   const [partnerName, setPartnerName] = useState('')
-  const [partnerContact, setPartnerContact] = useState('')
+  const [partnerEmail, setPartnerEmail] = useState('')
+  const [partnerMobile, setPartnerMobile] = useState('')
   const [kind, setKind] = useState<'cash' | 'in-kind'>('cash')
   const [category, setCategory] = useState(eventConfig.sponsorOpportunities[0]?.id ?? '')
   const [proposal, setProposal] = useState('')
@@ -37,46 +41,46 @@ export function Patronage() {
   const [partnerStatus, setPartnerStatus] = useState<string | null>(null)
   const [partnerError, setPartnerError] = useState<string | null>(null)
 
-  function buildPartnerPayload(): MailtoPayload | null {
-    if (!partnerName.trim() || !partnerContact.trim() || !proposal.trim()) {
-      setPartnerError('Name, contact, and a short proposal are required.')
+  function buildPartner(): PartnerData | null {
+    if (!partnerName.trim() || !partnerEmail.trim() || !proposal.trim()) {
+      setPartnerError('Name, email, and a short proposal are required.')
       return null
     }
-    const categoryLabel =
-      eventConfig.sponsorOpportunities.find((item) => item.id === category)?.title ?? category
-    const recordId = makeRecordId('SPONSOR')
-    const subject = `[Exaltavit Partner] ${recordId} — ${categoryLabel}`
-    const body = [
-      'Exaltavit partnership inquiry',
-      `Record ID: ${recordId}`,
-      `Name / organization: ${partnerName.trim()}`,
-      `Contact: ${partnerContact.trim()}`,
-      `Support type: ${kind}`,
-      `Category: ${categoryLabel}`,
-      `Recognition permission: ${partnerRecognize ? 'yes' : 'no'}`,
-      '',
-      'Proposal:',
-      proposal.trim(),
-    ].join('\n')
-    return { to: eventConfig.organizerEmail, subject, body }
+    if (!isValidEmail(partnerEmail)) {
+      setPartnerError('Please enter a valid email address.')
+      return null
+    }
+    if (!isValidMobile(partnerMobile)) {
+      setPartnerError('Mobile number should look like 09XXXXXXXXX or +639XXXXXXXXX.')
+      return null
+    }
+    return {
+      name: partnerName.trim(),
+      email: partnerEmail.trim(),
+      mobile: partnerMobile.trim(),
+      kind,
+      category,
+      proposal: proposal.trim(),
+      recognize: partnerRecognize,
+    }
   }
 
-  async function openPartnerDraft() {
+  async function sendPartner() {
     setPartnerError(null)
     setPartnerStatus(null)
-    const payload = buildPartnerPayload()
-    if (!payload) return
-    openMailto(payload)
-    setPartnerStatus('Your email draft should open. Nothing is sent until you press send in your mail app.')
-  }
-
-  async function copyPartnerMessage() {
-    setPartnerError(null)
-    setPartnerStatus(null)
-    const payload = buildPartnerPayload()
-    if (!payload) return
-    const ok = await copyText(formatEmailPackage(payload))
-    setPartnerStatus(ok ? 'Message copied. Paste it into your email app when ready.' : 'Could not copy — try Open email draft.')
+    const partner = buildPartner()
+    if (!partner) return
+    const result = await submit(partner)
+    if (!result.ok) {
+      setPartnerError(result.error)
+      return
+    }
+    setPartnerStatus(
+      result.copySentTo
+        ? `Inquiry sent — a copy is on its way to ${result.copySentTo}. Record ID: ${result.recordId}`
+        : `Inquiry sent. Record ID: ${result.recordId}`,
+    )
+    setProposal('')
   }
 
   return (
@@ -138,7 +142,7 @@ export function Patronage() {
               </div>
             ) : null}
 
-            {emailReady ? (
+            {giftReady ? (
               <Button type="button" variant="gold" className="mt-6" onClick={openDrawer}>
                 Send a gift note
               </Button>
@@ -203,7 +207,7 @@ export function Patronage() {
           ))}
         </ul>
 
-        {emailReady ? (
+        {partnerReady ? (
           <>
             <Button
               type="button"
@@ -219,9 +223,26 @@ export function Patronage() {
               <Field label="Name or organization">
                 <Input value={partnerName} onChange={(event) => setPartnerName(event.target.value)} />
               </Field>
-              <Field label="Contact">
-                <Input value={partnerContact} onChange={(event) => setPartnerContact(event.target.value)} />
-              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Email" hint="We’ll send a copy of your inquiry here">
+                  <Input
+                    type="email"
+                    autoComplete="email"
+                    value={partnerEmail}
+                    onChange={(event) => setPartnerEmail(event.target.value)}
+                  />
+                </Field>
+                <Field label="Mobile number (optional)" hint="09XXXXXXXXX or +639XXXXXXXXX">
+                  <Input
+                    type="tel"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    value={partnerMobile}
+                    onChange={(event) => setPartnerMobile(event.target.value)}
+                  />
+                </Field>
+              </div>
+              <HoneypotField {...honeypotProps} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Support type">
                   <Select value={kind} onChange={(event) => setKind(event.target.value as 'cash' | 'in-kind')}>
@@ -253,7 +274,7 @@ export function Patronage() {
               </label>
               {partnerError ? <Notice tone="warn">{partnerError}</Notice> : null}
               {partnerStatus ? <Notice tone="success">{partnerStatus}</Notice> : null}
-              <MailtoActions onOpenDraft={openPartnerDraft} onCopyMessage={copyPartnerMessage} />
+              <SubmitButton onClick={sendPartner} sending={sending} label="Send inquiry" />
             </div>
             </Collapse>
           </>

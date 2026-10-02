@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { Attend } from './components/Attend'
 import { BottomBar } from './components/BottomBar'
 import { CartButton } from './components/CartButton'
@@ -20,7 +20,20 @@ import { Voices } from './components/Voices'
 import { CartContext, useCart, type CartStore } from './hooks/useCart'
 import { SupportDrawerContext, type SupportPreset } from './hooks/useSupportDrawer'
 
+const AdminPage = lazy(() => import('./admin/AdminPage'))
+
 export default function App() {
+  if (window.location.pathname.replace(/\/$/, '') === '/admin') {
+    return (
+      <Suspense fallback={null}>
+        <AdminPage />
+      </Suspense>
+    )
+  }
+  return <Site />
+}
+
+function Site() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
   const [supportPreset, setSupportPreset] = useState<SupportPreset | null>(null)

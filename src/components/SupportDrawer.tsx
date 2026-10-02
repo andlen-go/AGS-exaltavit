@@ -1,28 +1,44 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { eventConfig, formatPhp, hasMajorPartners, isGCashReady, isOrganizerEmailReady } from '../config/event'
+import { eventConfig, formatPhp, hasMajorPartners, isGCashReady } from '../config/event'
+import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
 import { useSupportDrawer } from '../hooks/useSupportDrawer'
-import { copyText, formatEmailPackage, makeRecordId, openMailto, type MailtoPayload } from '../lib/mailto'
-import { MailtoActions } from './MediaPlaceholder'
+import { copyText } from '../lib/clipboard'
+import { isValidEmail, isValidMobile, MAX_PHOTO_BYTES, type GiftData, type PhotoAttachment } from '../shared/forms'
+import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Collapse, Field, Input, Notice, SponsorBadge, Textarea } from './ui'
+
+function readAsAttachment(file: File): Promise<PhotoAttachment> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = String(reader.result ?? '')
+      resolve({ filename: file.name, contentType: file.type, base64: result.slice(result.indexOf(',') + 1) })
+    }
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
 
 /** Chat-style gift panel rising from the bottom-right Support button (bottom sheet on mobile). */
 export function SupportDrawer() {
   const { open, preset, closeDrawer } = useSupportDrawer()
   const gcashReady = isGCashReady()
-  const emailReady = isOrganizerEmailReady()
+  const emailReady = useFormEnabled('gift')
+  const { submit, sending, honeypotProps } = useFormSubmit('gift')
   const panelRef = useRef<HTMLDivElement>(null)
 
   const [amount, setAmount] = useState(eventConfig.suggestedAmountsPhp[1] ?? 250)
   const [customAmount, setCustomAmount] = useState('')
   const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
+  const [email, setEmail] = useState('')
+  const [mobile, setMobile] = useState('')
   const [message, setMessage] = useState('')
   const [recognize, setRecognize] = useState(false)
   const [displayAs, setDisplayAs] = useState<'individual' | 'organization'>('individual')
   const [displayName, setDisplayName] = useState('')
   const [blurb, setBlurb] = useState('')
   const [link, setLink] = useState('')
-  const [photo, setPhoto] = useState<{ name: string; url: string } | null>(null)
+  const [photo, setPhoto] = useState<{ name: string; url: string; file: File } | null>(null)
   const [photoLink, setPhotoLink] = useState('')
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -62,63 +78,62 @@ export function SupportDrawer() {
     return amount
   }, [amount, customAmount])
 
-  function buildGiftPayload(): MailtoPayload | null {
+  async function buildGift(): Promise<GiftData | null> {
     if (!selectedAmount || selectedAmount < 1) {
       setError('Enter a gift amount of at least ₱1.')
       return null
     }
-    const recordId = makeRecordId('GIFT')
-    const subject = `[Exaltavit Gift] ${recordId} — ${formatPhp(selectedAmount)}`
-    const body = [
-      'Exaltavit patronage gift',
-      `Record ID: ${recordId}`,
-      `Amount: ${formatPhp(selectedAmount)}`,
-      `Name: ${name.trim() || '(not provided)'}`,
-      `Contact: ${contact.trim() || '(not provided)'}`,
-      `Message: ${message.trim() || '(none)'}`,
-      `Public recognition consent: ${recognize ? 'yes' : 'no'}`,
-      ...(recognize
-        ? [
-            '',
-            'Acknowledgments listing',
-            `Display as: ${displayAs}`,
-            `Display name: ${displayName.trim() || name.trim() || '(use my name above)'}`,
-            `Short description: ${blurb.trim() || '(none)'}`,
-            `Website / social: ${link.trim() || '(none)'}`,
-            `Photo / logo: ${
-              photo ? `${photo.name} (I will attach this file to the email)` : photoLink.trim() || '(none)'
-            }`,
-          ]
-        : []),
-      '',
-      gcashReady
-        ? 'I have transferred (or will transfer) this amount via GCash as instructed on the site.'
-        : 'Please reply with transfer instructions for this gift.',
-      `Timezone reference: ${eventConfig.timezone}`,
-    ].join('\n')
-    return { to: eventConfig.organizerEmail, subject, body }
+    if (email.trim() && !isValidEmail(email)) {
+      setError('Please enter a valid email address.')
+      return null
+    }
+    if (!isValidMobile(mobile)) {
+      setError('Mobile number should look like 09XXXXXXXXX or +639XXXXXXXXX.')
+      return null
+    }
+    let attachment: PhotoAttachment | undefined
+    if (recognize && photo) {
+      try {
+        attachment = await readAsAttachment(photo.file)
+      } catch {
+        setError('Could not read the selected image. Try choosing it again.')
+        return null
+      }
+    }
+    return {
+      amountPhp: selectedAmount,
+      name: name.trim(),
+      email: email.trim(),
+      mobile: mobile.trim(),
+      message: message.trim(),
+      recognize,
+      displayAs,
+      displayName: displayName.trim(),
+      blurb: blurb.trim(),
+      link: link.trim(),
+      photoLink: photo ? '' : photoLink.trim(),
+      photo: attachment,
+    }
   }
 
-  function openGiftDraft() {
+  async function sendGift() {
     setError(null)
     setStatus(null)
-    const payload = buildGiftPayload()
-    if (!payload) return
-    openMailto(payload)
+    const gift = await buildGift()
+    if (!gift) return
+    const result = await submit(gift)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    const transferNote = gcashReady
+      ? 'Please complete your GCash transfer below if you haven’t yet.'
+      : 'The organizer will reply with transfer instructions.'
     setStatus(
-      recognize && photo
-        ? `Your email draft should open — remember to attach ${photo.name} before sending.`
-        : 'Your email draft should open. Nothing is sent until you press send in your mail app.',
+      result.copySentTo
+        ? `Thank you! Your gift note was sent and a copy is on its way to ${result.copySentTo}. ${transferNote}`
+        : `Thank you! Your gift note was sent. ${transferNote}`,
     )
-  }
-
-  async function copyGiftMessage() {
-    setError(null)
-    setStatus(null)
-    const payload = buildGiftPayload()
-    if (!payload) return
-    const ok = await copyText(formatEmailPackage(payload))
-    setStatus(ok ? 'Message copied. Paste it into your email app when ready.' : 'Could not copy — try Open email draft.')
   }
 
   return (
@@ -209,9 +224,19 @@ export function SupportDrawer() {
               <Field label="Name (optional)">
                 <Input value={name} onChange={(event) => setName(event.target.value)} />
               </Field>
-              <Field label="Contact (optional)" hint="Email or mobile">
-                <Input value={contact} onChange={(event) => setContact(event.target.value)} />
+              <Field label="Email (optional)" hint="Add it to receive a thank-you copy of your note">
+                <Input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
               </Field>
+              <Field label="Mobile number (optional)" hint="09XXXXXXXXX or +639XXXXXXXXX">
+                <Input
+                  type="tel"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  value={mobile}
+                  onChange={(event) => setMobile(event.target.value)}
+                />
+              </Field>
+              <HoneypotField {...honeypotProps} />
               <Field label="Message (optional)">
                 <Textarea value={message} onChange={(event) => setMessage(event.target.value)} />
               </Field>
@@ -284,8 +309,14 @@ export function SupportDrawer() {
                           className="sr-only"
                           onChange={(event) => {
                             const file = event.target.files?.[0]
+                            event.target.value = ''
+                            if (file && file.size > MAX_PHOTO_BYTES) {
+                              setError('Photo or logo must be 4 MB or smaller.')
+                              return
+                            }
                             if (photo) URL.revokeObjectURL(photo.url)
-                            setPhoto(file ? { name: file.name, url: URL.createObjectURL(file) } : null)
+                            setError(null)
+                            setPhoto(file ? { name: file.name, url: URL.createObjectURL(file), file } : null)
                           }}
                         />
                       </label>
@@ -304,8 +335,7 @@ export function SupportDrawer() {
                     </div>
                     {photo ? (
                       <p className="mt-1.5 text-xs text-navy/60">
-                        Email can’t carry files automatically — attach <strong>{photo.name}</strong> to the draft before
-                        sending.
+                        <strong>{photo.name}</strong> will be attached to your note automatically.
                       </p>
                     ) : (
                       <div className="mt-2">
@@ -343,7 +373,7 @@ export function SupportDrawer() {
               </Collapse>
               {error ? <Notice tone="warn">{error}</Notice> : null}
               {status ? <Notice tone="success">{status}</Notice> : null}
-              <MailtoActions onOpenDraft={openGiftDraft} onCopyMessage={copyGiftMessage} />
+              <SubmitButton onClick={sendGift} sending={sending} label="Send gift note" />
             </div>
           ) : (
             <p className="text-sm text-navy/65">

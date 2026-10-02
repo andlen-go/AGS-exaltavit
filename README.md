@@ -2,7 +2,7 @@
 
 One-page campaign for **Exaltavit**, a free choral concert by **Avant Garde Singers** on **October 17, 2026** at the **National Shrine and Parish of Our Lady of Aranzazu, San Mateo, Rizal**.
 
-Stack: **Vite + React + TypeScript + Tailwind**. Fully static. No database, auth, or payment processors. Gifts, keepsake orders, RSVPs, and partnerships use **mailto** with **Open email draft** / **Copy message**.
+Stack: **Vite + React + TypeScript + Tailwind**, plus **Netlify Functions** for form email. No database or payment processors. Gifts, keepsake orders, RSVPs, and partnership inquiries are emailed by the server (Elastic Email SMTP) to the organizer, with a branded copy to the visitor.
 
 ## Environments
 
@@ -100,7 +100,23 @@ Set this Netlify environment variable (Site settings → Environment variables):
 
 ```
 VITE_SITE_URL=https://exaltavit.netlify.app
+ADMIN_PASSWORD=<password for /admin>
+SESSION_SECRET=<long random string>
+SETTINGS_ENCRYPTION_KEY=<32 random bytes, base64>
 ```
+
+## Form email and admin
+
+All four forms (keepsakes cart, RSVP, partnership, support gift) POST to `/api/send-form` (`netlify/functions/send-form.mts`), which sends a branded HTML email to the organizer inboxes and a copy to the visitor.
+
+1. In Elastic Email, verify the sender domain/address and create SMTP credentials.
+2. Open **/admin** (small "Admin" link in the footer) and log in with `ADMIN_PASSWORD`.
+3. Enter organizer emails, sender name/email, SMTP host (`smtp.elasticemail.com`), port (`2525`), username, and password. Save, then **Send test email**.
+4. Toggle each form on/off and whether visitors get a copy.
+
+Settings are stored in Netlify Blobs (`site-settings`); the SMTP password is encrypted with `SETTINGS_ENCRYPTION_KEY`. Forms stay hidden until email is configured.
+
+Local testing with functions: put the three variables in `.env`, then run `npm run dev:netlify` (Netlify CLI wraps Vite on port 5179). Plain `npm run dev` serves the site without the API.
 
 ## Page order
 
@@ -147,7 +163,7 @@ Optional share URL (no trailing slash) — see `.env.example` for local vs stagi
 5. Fill GCash name, number, and QR under `public/`.
 6. Publish `timeLabel` and `mapUrl` when confirmed.
 7. Confirm keepsake pickup / deadline / size chart.
-8. Watch inbox for `[Exaltavit Gift]`, `[Exaltavit Merch]`, `[Exaltavit RSVP]`, `[Exaltavit Partner]` + Record ID.
+8. Configure email at `/admin`, then watch the inbox for `[Exaltavit Gift]`, `[Exaltavit Keepsakes]`, `[Exaltavit RSVP]`, `[Exaltavit Partner]` + Record ID.
 
 ## Brand
 

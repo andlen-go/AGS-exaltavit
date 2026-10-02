@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { eventConfig, formatPhp, isOrganizerEmailReady } from '../config/event'
+import { eventConfig, formatPhp } from '../config/event'
 import { useCartStore } from '../hooks/useCart'
+import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
 import { cartSubtotal } from '../lib/cart'
-import { copyText, formatEmailPackage, makeRecordId, openMailto, type MailtoPayload } from '../lib/mailto'
-import { MailtoActions } from './MediaPlaceholder'
+import { isValidEmail, isValidMobile, type MerchData } from '../shared/forms'
+import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Field, Input, Notice } from './ui'
 
 function productImage(productId: string) {
@@ -14,10 +15,12 @@ function productImage(productId: string) {
 export function CartPanel() {
   const cart = useCartStore()
   const { open, closeCart } = cart
-  const emailReady = isOrganizerEmailReady()
+  const emailReady = useFormEnabled('merch')
+  const { submit, sending, honeypotProps } = useFormSubmit('merch')
   const panelRef = useRef<HTMLDivElement>(null)
   const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
+  const [email, setEmail] = useState('')
+  const [mobile, setMobile] = useState('')
   const [donationAddon, setDonationAddon] = useState('0')
   const [policyOk, setPolicyOk] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -42,68 +45,55 @@ export function CartPanel() {
     }
   }, [open, closeCart])
 
-  function buildOrderPayload(): MailtoPayload | null {
+  function buildOrder(): MerchData | null {
     if (cart.lines.length === 0) {
       setError('Add at least one item to your cart.')
       return null
     }
-    if (!name.trim() || !contact.trim()) {
-      setError('Name and one contact method are required.')
+    if (!name.trim() || !email.trim()) {
+      setError('Name and email are required.')
+      return null
+    }
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.')
+      return null
+    }
+    if (!isValidMobile(mobile)) {
+      setError('Mobile number should look like 09XXXXXXXXX or +639XXXXXXXXX.')
       return null
     }
     if (!policyOk) {
       setError('Please acknowledge the pre-order policy before sending.')
       return null
     }
-    const recordId = makeRecordId('MERCH')
-    const lineText = cart.lines
-      .map(
-        (line) =>
-          `- ${line.productName} (${line.variantLabel}) × ${line.quantity} = ${formatPhp(line.unitPricePhp * line.quantity)}`,
-      )
-      .join('\n')
-    const subject = `[Exaltavit Merch] ${recordId} — ${formatPhp(total)}`
-    const body = [
-      'Exaltavit keepsake pre-order',
-      `Record ID: ${recordId}`,
-      `Name: ${name.trim()}`,
-      `Contact: ${contact.trim()}`,
-      '',
-      'Items:',
-      lineText,
-      '',
-      `Merchandise subtotal: ${formatPhp(subtotal)}`,
-      `Optional donation add-on: ${formatPhp(addon)}`,
-      `Order total: ${formatPhp(total)}`,
-      '',
-      `Pickup note: ${eventConfig.pickupCopy}`,
-      `Order deadline: ${eventConfig.orderDeadlineCopy}`,
-      `Size chart ready: ${eventConfig.sizeChartReady ? 'yes' : 'no — confirm sizes with organizer if unsure'}`,
-      'Policy acknowledged: yes',
-      '',
-      'This is a pre-order request. Payment and pickup will be confirmed by reply.',
-    ].join('\n')
-    return { to: eventConfig.organizerEmail, subject, body }
+    return {
+      name: name.trim(),
+      email: email.trim(),
+      mobile: mobile.trim(),
+      donationAddonPhp: addon,
+      policyAck: policyOk,
+      lines: cart.lines.map((line) => ({ productId: line.productId, variantId: line.variantId, quantity: line.quantity })),
+    }
   }
 
-  function openOrderDraft() {
+  async function sendOrder() {
     setError(null)
     setStatus(null)
-    const payload = buildOrderPayload()
-    if (!payload) return
-    openMailto(payload)
-    setStatus('Your email draft should open. Nothing is sent until you press send in your mail app.')
+    const order = buildOrder()
+    if (!order) return
+    const result = await submit(order)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setStatus(
+      result.copySentTo
+        ? `Order request sent — a copy is on its way to ${result.copySentTo}. Record ID: ${result.recordId}`
+        : `Order request sent. Record ID: ${result.recordId}`,
+    )
     cart.reset()
     setPolicyOk(false)
-  }
-
-  async function copyOrderMessage() {
-    setError(null)
-    setStatus(null)
-    const payload = buildOrderPayload()
-    if (!payload) return
-    const ok = await copyText(formatEmailPackage(payload))
-    setStatus(ok ? 'Message copied. Paste it into your email app when ready.' : 'Could not copy — try Open email draft.')
+    setDonationAddon('0')
   }
 
   return (
@@ -213,9 +203,25 @@ export function CartPanel() {
                   <Field label="Name">
                     <Input value={name} onChange={(event) => setName(event.target.value)} required />
                   </Field>
-                  <Field label="Email or mobile">
-                    <Input value={contact} onChange={(event) => setContact(event.target.value)} required />
+                  <Field label="Email" hint="We’ll send a copy of your order here">
+                    <Input
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      required
+                    />
                   </Field>
+                  <Field label="Mobile number (optional)" hint="09XXXXXXXXX or +639XXXXXXXXX">
+                    <Input
+                      type="tel"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      value={mobile}
+                      onChange={(event) => setMobile(event.target.value)}
+                    />
+                  </Field>
+                  <HoneypotField {...honeypotProps} />
                   <Field label="Optional donation add-on (PHP)" hint="Defaults to 0">
                     <Input
                       inputMode="numeric"
@@ -237,7 +243,15 @@ export function CartPanel() {
                     </span>
                   </label>
                 </div>
-              ) : null}
+              ) : (
+                <Notice>
+                  Online pre-orders aren’t open yet. Message the organizer on{' '}
+                  <a href={eventConfig.facebookUrl} target="_blank" rel="noreferrer" className="font-medium text-gold hover:underline">
+                    Facebook
+                  </a>{' '}
+                  to reserve keepsakes.
+                </Notice>
+              )}
             </>
           )}
         </div>
@@ -253,12 +267,7 @@ export function CartPanel() {
             </div>
             {error ? <Notice tone="warn">{error}</Notice> : null}
             {status ? <Notice tone="success">{status}</Notice> : null}
-            <MailtoActions
-              onOpenDraft={openOrderDraft}
-              onCopyMessage={copyOrderMessage}
-              openLabel="Send order request"
-              copyLabel="Copy message"
-            />
+            <SubmitButton onClick={sendOrder} sending={sending} label="Send order request" className="w-full" />
           </div>
         ) : null}
       </div>

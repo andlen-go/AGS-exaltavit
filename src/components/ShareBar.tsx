@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { eventConfig, getShareText, getShareUrl } from '../config/event'
-import { copyText } from '../lib/mailto'
+import { copyText } from '../lib/clipboard'
 
 type Network = {
   id: string

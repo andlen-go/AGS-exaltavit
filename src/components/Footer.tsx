@@ -73,24 +73,30 @@ export function Footer() {
           </div>
         </div>
 
-        <p className="mt-12 text-xs text-ivory/45">
-          © {new Date().getFullYear()} {eventConfig.organizer}. Exaltavit concert page — static site, organizer inbox
-          ops.
-        </p>
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-3 text-xs text-ivory/45">
+          <p>
+            © {new Date().getFullYear()} {eventConfig.organizer}. Exaltavit concert page.
+          </p>
+          <a href="/admin" rel="nofollow" className="text-ivory/35 hover:text-ivory/70">
+            Admin
+          </a>
+        </div>
       </div>
 
       <Sheet open={dialog === 'privacy'} title="Privacy note" onClose={() => setDialog(null)}>
         <p className="text-sm leading-relaxed text-navy/75">
-          Information you submit through mailto forms is sent from your own email app to{' '}
-          {eventConfig.privacyContact}. Nothing is stored on this website. Ask the organizer to delete your message if
-          you change your mind about recognition or contact use.
+          Information you submit through the forms on this page is emailed to {eventConfig.organizer} at{' '}
+          {eventConfig.privacyContact}, with a copy sent to the email address you provide. The website does not keep a
+          database of submissions. Ask the organizer to delete your message if you change your mind about recognition
+          or contact use.
         </p>
       </Sheet>
 
       <Sheet open={dialog === 'orders'} title="Order note" onClose={() => setDialog(null)}>
         <p className="text-sm leading-relaxed text-navy/75">
-          Merchandise checkout only opens your email with an order summary. Payment, inventory, and pickup are handled
-          offline by {eventConfig.organizer}. Keep your record ID when corresponding about an order.
+          Merchandise checkout sends your order request to the organizer by email and a copy with your record ID to you.
+          No payment is taken on this website — payment, inventory, and pickup are confirmed by {eventConfig.organizer}.
+          Keep your record ID when corresponding about an order.
         </p>
       </Sheet>
     </footer>

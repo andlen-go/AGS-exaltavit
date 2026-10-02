@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { eventConfig, getTimeDisplay, isMapReady, isOrganizerEmailReady } from '../config/event'
-import { copyText, formatEmailPackage, makeRecordId, openMailto, type MailtoPayload } from '../lib/mailto'
-import { MailtoActions } from './MediaPlaceholder'
+import { eventConfig, getTimeDisplay, isMapReady } from '../config/event'
+import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
+import { isValidEmail, isValidMobile, type RsvpData } from '../shared/forms'
+import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Field, Input, LineIcon, Notice, Section, Sheet, Textarea, type IconName } from './ui'
 
 type Props = {
@@ -27,11 +28,13 @@ function eventDateParts() {
 }
 
 export function Attend({ onSheetOpenChange }: Props) {
-  const emailReady = isOrganizerEmailReady()
+  const emailReady = useFormEnabled('rsvp')
+  const { submit, sending, honeypotProps } = useFormSubmit('rsvp')
   const [formOpen, setFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [partySize, setPartySize] = useState('1')
-  const [contact, setContact] = useState('')
+  const [email, setEmail] = useState('')
+  const [mobile, setMobile] = useState('')
   const [assistance, setAssistance] = useState('')
   const [invitedBy, setInvitedBy] = useState(
     () => new URLSearchParams(window.location.search).get('invitedBy')?.trim() ?? '',
@@ -54,56 +57,55 @@ export function Attend({ onSheetOpenChange }: Props) {
     onSheetOpenChange?.(open)
   }
 
-  function buildPayload(): MailtoPayload | null {
+  function buildRsvp(): RsvpData | null {
     const size = Number(partySize)
-    if (!name.trim() || !contact.trim()) {
-      setError('Name and contact are required.')
+    if (!name.trim() || !email.trim()) {
+      setError('Name and email are required.')
+      return null
+    }
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.')
+      return null
+    }
+    if (!isValidMobile(mobile)) {
+      setError('Mobile number should look like 09XXXXXXXXX or +639XXXXXXXXX.')
       return null
     }
     if (!Number.isFinite(size) || size < 1 || size > 20) {
       setError('Party size should be between 1 and 20.')
       return null
     }
-    const recordId = makeRecordId('RSVP')
-    const subject = `[Exaltavit RSVP] ${recordId} — party of ${size}`
-    const body = [
-      'Exaltavit free RSVP (planning only — not reserved seats)',
-      `Record ID: ${recordId}`,
-      `Name: ${name.trim()}`,
-      `Party size: ${size}`,
-      `Contact: ${contact.trim()}`,
-      `Invited by: ${invitedBy.trim() || '(not provided)'}`,
-      `Assistance notes: ${assistance.trim() || '(none)'}`,
-      '',
-      `Concert: ${eventConfig.dateLabel}, ${getTimeDisplay()}`,
-      `Venue: ${eventConfig.venue}, ${eventConfig.venueCity}`,
-    ].join('\n')
-    return { to: eventConfig.organizerEmail, subject, body }
+    return {
+      name: name.trim(),
+      email: email.trim(),
+      mobile: mobile.trim(),
+      partySize: size,
+      invitedBy: invitedBy.trim(),
+      assistance: assistance.trim(),
+    }
   }
 
-  function openDraft() {
+  async function sendRsvp() {
     setError(null)
     setStatus(null)
-    const payload = buildPayload()
-    if (!payload) return
-    openMailto(payload)
-    const size = Number(partySize)
-    setMyParty(size)
+    const rsvp = buildRsvp()
+    if (!rsvp) return
+    const result = await submit(rsvp)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setMyParty(rsvp.partySize)
     try {
-      localStorage.setItem(MY_PARTY_KEY, String(size))
+      localStorage.setItem(MY_PARTY_KEY, String(rsvp.partySize))
     } catch {
       // Counter still updates for this visit when storage is blocked.
     }
-    setStatus('Your email draft should open. Nothing is sent until you press send in your mail app.')
-  }
-
-  async function copyMessage() {
-    setError(null)
-    setStatus(null)
-    const payload = buildPayload()
-    if (!payload) return
-    const ok = await copyText(formatEmailPackage(payload))
-    setStatus(ok ? 'Message copied. Paste it into your email app when ready.' : 'Could not copy — try Open email draft.')
+    setStatus(
+      result.copySentTo
+        ? `Thank you — we’ve noted your party of ${rsvp.partySize}. A confirmation is on its way to ${result.copySentTo}.`
+        : `Thank you — we’ve noted your party of ${rsvp.partySize}.`,
+    )
   }
 
   return (
@@ -216,7 +218,7 @@ export function Attend({ onSheetOpenChange }: Props) {
             >
               <span>
                 <span className="block font-display text-2xl leading-tight">Let us know you’re coming</span>
-                <span className="block text-sm text-ivory/85">Takes under a minute · sent from your own email</span>
+                <span className="block text-sm text-ivory/85">Takes under a minute · confirmation sent to your email</span>
               </span>
               <span className="text-2xl transition group-hover:translate-x-1" aria-hidden="true">
                 →
@@ -256,10 +258,20 @@ export function Attend({ onSheetOpenChange }: Props) {
                 onChange={(event) => setPartySize(event.target.value.replace(/[^\d]/g, ''))}
               />
             </Field>
-            <Field label="Contact" hint="Email or mobile">
-              <Input value={contact} onChange={(event) => setContact(event.target.value)} />
+            <Field label="Email" hint="We’ll send your confirmation here">
+              <Input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
             </Field>
           </div>
+          <Field label="Mobile number (optional)" hint="09XXXXXXXXX or +639XXXXXXXXX">
+            <Input
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              value={mobile}
+              onChange={(event) => setMobile(event.target.value)}
+            />
+          </Field>
+          <HoneypotField {...honeypotProps} />
           <Field label="Who invited you? (optional)" hint="A singer, parishioner, friend, or where you heard about Exaltavit">
             <Input
               value={invitedBy}
@@ -272,7 +284,7 @@ export function Attend({ onSheetOpenChange }: Props) {
           </Field>
           {error ? <Notice tone="warn">{error}</Notice> : null}
           {status ? <Notice tone="success">{status}</Notice> : null}
-          <MailtoActions onOpenDraft={openDraft} onCopyMessage={copyMessage} />
+          <SubmitButton onClick={sendRsvp} sending={sending} label="Send RSVP" />
         </div>
       </Sheet>
     </Section>
