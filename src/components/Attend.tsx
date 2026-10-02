@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { eventConfig, getTimeDisplay, isMapReady } from '../config/event'
-import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
+import { useFormStatus, useFormSubmit } from '../hooks/useFormSubmit'
 import { isValidEmail, isValidMobile, type RsvpData } from '../shared/forms'
+import { ConfirmSendDialog } from './ConfirmSendDialog'
 import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Field, Input, LineIcon, Notice, Section, Sheet, Textarea, type IconName } from './ui'
 
@@ -28,8 +29,9 @@ function eventDateParts() {
 }
 
 export function Attend({ onSheetOpenChange }: Props) {
-  const emailReady = useFormEnabled('rsvp')
+  const { enabled: emailReady, sendsCopy } = useFormStatus('rsvp')
   const { submit, sending, honeypotProps } = useFormSubmit('rsvp')
+  const [pending, setPending] = useState<RsvpData | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [partySize, setPartySize] = useState('1')
@@ -85,12 +87,16 @@ export function Attend({ onSheetOpenChange }: Props) {
     }
   }
 
-  async function sendRsvp() {
+  function reviewRsvp() {
     setError(null)
     setStatus(null)
     const rsvp = buildRsvp()
-    if (!rsvp) return
+    if (rsvp) setPending(rsvp)
+  }
+
+  async function sendRsvp(rsvp: RsvpData) {
     const result = await submit(rsvp)
+    setPending(null)
     if (!result.ok) {
       setError(result.error)
       return
@@ -214,14 +220,22 @@ export function Attend({ onSheetOpenChange }: Props) {
               type="button"
               onClick={() => setOpen(true)}
               aria-haspopup="dialog"
-              className="group flex items-center justify-between gap-4 rounded-lg bg-gold px-6 py-5 text-left text-ivory shadow-lg transition hover:bg-gold-soft"
+              className="group flex cursor-pointer flex-col gap-4 rounded-lg bg-gold px-6 py-5 text-left text-ivory shadow-lg ring-gold/40 ring-offset-2 ring-offset-ivory transition duration-200 hover:-translate-y-0.5 hover:bg-gold-soft hover:shadow-xl focus-visible:ring-4 focus-visible:outline-none active:translate-y-0 active:shadow-md sm:flex-row sm:items-center sm:justify-between"
             >
-              <span>
-                <span className="block font-display text-2xl leading-tight">Let us know you’re coming</span>
-                <span className="block text-sm text-ivory/85">Takes under a minute · confirmation sent to your email</span>
+              <span className="flex items-center gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ivory/20 text-ivory">
+                  <LineIcon name="users" />
+                </span>
+                <span>
+                  <span className="block font-display text-2xl leading-tight">Let us know you’re coming</span>
+                  <span className="block text-sm text-ivory/85">Takes under a minute · confirmation sent to your email</span>
+                </span>
               </span>
-              <span className="text-2xl transition group-hover:translate-x-1" aria-hidden="true">
-                →
+              <span className="inline-flex shrink-0 items-center justify-center gap-2 self-stretch rounded-full bg-ivory px-5 py-2.5 text-sm font-semibold tracking-wide text-navy shadow-sm transition group-hover:bg-white sm:self-auto">
+                RSVP now
+                <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">
+                  →
+                </span>
               </span>
             </button>
           ) : (
@@ -284,9 +298,33 @@ export function Attend({ onSheetOpenChange }: Props) {
           </Field>
           {error ? <Notice tone="warn">{error}</Notice> : null}
           {status ? <Notice tone="success">{status}</Notice> : null}
-          <SubmitButton onClick={sendRsvp} sending={sending} label="Send RSVP" />
+          <SubmitButton onClick={reviewRsvp} sending={sending} label="Send RSVP" />
         </div>
       </Sheet>
+      <ConfirmSendDialog
+        open={pending !== null}
+        title="Send your RSVP?"
+        rows={[
+          ['Name', pending?.name ?? ''],
+          ['Party size', String(pending?.partySize ?? '')],
+          ['Email', pending?.email ?? ''],
+          ...(pending?.mobile ? ([['Mobile', pending.mobile]] as [string, string][]) : []),
+          ...(pending?.invitedBy ? ([['Invited by', pending.invitedBy]] as [string, string][]) : []),
+          ...(pending?.assistance ? ([['Assistance', pending.assistance]] as [string, string][]) : []),
+        ]}
+        note={
+          <>
+            Your RSVP goes to {eventConfig.organizer}
+            {sendsCopy ? <>, and a confirmation will be emailed to <strong>{pending?.email}</strong></> : null}. This helps
+            us plan — it does not reserve seats.
+          </>
+        }
+        confirmLabel="Yes, send RSVP"
+        sending={sending}
+        onConfirm={() => pending && sendRsvp(pending)}
+        onCancel={() => setPending(null)}
+      />
+
     </Section>
   )
 }

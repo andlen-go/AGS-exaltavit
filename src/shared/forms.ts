@@ -77,7 +77,11 @@ export type SubmitResponse =
   | { ok: true; recordId: string; copySentTo: string | null }
   | { ok: false; error: string }
 
-export type PublicConfig = { forms: Record<FormType, boolean> }
+export type PublicConfig = {
+  forms: Record<FormType, boolean>
+  /** Whether the visitor gets a copy (admin "Send copy to visitor") */
+  copies: Record<FormType, boolean>
+}
 
 export type FormSettings = { enabled: boolean; sendCopy: boolean }
 

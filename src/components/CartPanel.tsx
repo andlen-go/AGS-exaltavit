@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { eventConfig, formatPhp } from '../config/event'
 import { useCartStore } from '../hooks/useCart'
-import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
+import { useFormStatus, useFormSubmit } from '../hooks/useFormSubmit'
 import { cartSubtotal } from '../lib/cart'
 import { isValidEmail, isValidMobile, type MerchData } from '../shared/forms'
+import { ConfirmSendDialog } from './ConfirmSendDialog'
 import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Field, Input, Notice } from './ui'
 
@@ -15,8 +16,9 @@ function productImage(productId: string) {
 export function CartPanel() {
   const cart = useCartStore()
   const { open, closeCart } = cart
-  const emailReady = useFormEnabled('merch')
+  const { enabled: emailReady, sendsCopy } = useFormStatus('merch')
   const { submit, sending, honeypotProps } = useFormSubmit('merch')
+  const [pending, setPending] = useState<MerchData | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -76,12 +78,16 @@ export function CartPanel() {
     }
   }
 
-  async function sendOrder() {
+  function reviewOrder() {
     setError(null)
     setStatus(null)
     const order = buildOrder()
-    if (!order) return
+    if (order) setPending(order)
+  }
+
+  async function sendOrder(order: MerchData) {
     const result = await submit(order)
+    setPending(null)
     if (!result.ok) {
       setError(result.error)
       return
@@ -267,10 +273,32 @@ export function CartPanel() {
             </div>
             {error ? <Notice tone="warn">{error}</Notice> : null}
             {status ? <Notice tone="success">{status}</Notice> : null}
-            <SubmitButton onClick={sendOrder} sending={sending} label="Send order request" className="w-full" />
+            <SubmitButton onClick={reviewOrder} sending={sending} label="Send order request" className="w-full" />
           </div>
         ) : null}
       </div>
+      <ConfirmSendDialog
+        open={pending !== null}
+        title="Send your pre-order request?"
+        rows={[
+          ['Items', cart.lines.map((line) => `${line.productName} (${line.variantLabel}) × ${line.quantity}`).join('\n')],
+          ['Total', `${formatPhp(total)}${addon > 0 ? ` (incl. ${formatPhp(addon)} gift)` : ''}`],
+          ['Name', pending?.name ?? ''],
+          ['Email', pending?.email ?? ''],
+          ...(pending?.mobile ? ([['Mobile', pending.mobile]] as [string, string][]) : []),
+        ]}
+        note={
+          <>
+            Your request goes to {eventConfig.organizer}
+            {sendsCopy ? <>, and a copy will be emailed to <strong>{pending?.email}</strong></> : null}. No payment is
+            taken now — the organizer will confirm payment and pickup.
+          </>
+        }
+        confirmLabel="Yes, send order"
+        sending={sending}
+        onConfirm={() => pending && sendOrder(pending)}
+        onCancel={() => setPending(null)}
+      />
     </div>
   )
 }

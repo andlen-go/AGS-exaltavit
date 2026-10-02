@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { eventConfig, formatPhp, hasMajorPartners, isGCashReady } from '../config/event'
-import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
+import { useFormStatus, useFormSubmit } from '../hooks/useFormSubmit'
 import { useSupportDrawer } from '../hooks/useSupportDrawer'
 import { copyText } from '../lib/clipboard'
 import { isValidEmail, isValidMobile, MAX_PHOTO_BYTES, type GiftData, type PhotoAttachment } from '../shared/forms'
+import { ConfirmSendDialog } from './ConfirmSendDialog'
 import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Collapse, Field, Input, Notice, SponsorBadge, Textarea } from './ui'
 
@@ -23,8 +24,9 @@ function readAsAttachment(file: File): Promise<PhotoAttachment> {
 export function SupportDrawer() {
   const { open, preset, closeDrawer } = useSupportDrawer()
   const gcashReady = isGCashReady()
-  const emailReady = useFormEnabled('gift')
+  const { enabled: emailReady, sendsCopy } = useFormStatus('gift')
   const { submit, sending, honeypotProps } = useFormSubmit('gift')
+  const [pending, setPending] = useState<GiftData | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   const [amount, setAmount] = useState(eventConfig.suggestedAmountsPhp[1] ?? 250)
@@ -116,12 +118,16 @@ export function SupportDrawer() {
     }
   }
 
-  async function sendGift() {
+  async function reviewGift() {
     setError(null)
     setStatus(null)
     const gift = await buildGift()
-    if (!gift) return
+    if (gift) setPending(gift)
+  }
+
+  async function sendGift(gift: GiftData) {
     const result = await submit(gift)
+    setPending(null)
     if (!result.ok) {
       setError(result.error)
       return
@@ -301,7 +307,8 @@ export function SupportDrawer() {
                       {displayAs === 'organization' ? 'Logo' : 'Photo'} (optional)
                     </p>
                     <div className="flex items-center gap-3">
-                      <label className="cursor-pointer rounded-sm border border-navy/25 px-3 py-2 text-xs font-semibold text-navy hover:border-navy/50">
+                      {/* `relative` keeps the sr-only input inside the scroller; otherwise focusing it scrolls the overflow-hidden panel blank. */}
+                      <label className="relative cursor-pointer rounded-sm border border-navy/25 px-3 py-2 text-xs font-semibold text-navy hover:border-navy/50">
                         {photo ? 'Change image' : 'Choose image'}
                         <input
                           type="file"
@@ -373,7 +380,7 @@ export function SupportDrawer() {
               </Collapse>
               {error ? <Notice tone="warn">{error}</Notice> : null}
               {status ? <Notice tone="success">{status}</Notice> : null}
-              <SubmitButton onClick={sendGift} sending={sending} label="Send gift note" />
+              <SubmitButton onClick={reviewGift} sending={sending} label="Send gift note" />
             </div>
           ) : (
             <p className="text-sm text-navy/65">
@@ -413,6 +420,34 @@ export function SupportDrawer() {
           </div>
         </div>
       </div>
+      <ConfirmSendDialog
+        open={pending !== null}
+        title="Send your gift note?"
+        rows={[
+          ['Amount', formatPhp(pending?.amountPhp ?? 0)],
+          ['Name', pending?.name || 'Anonymous'],
+          ['Email', pending?.email || 'Not provided — no copy will be sent'],
+          ...(pending?.mobile ? ([['Mobile', pending.mobile]] as [string, string][]) : []),
+          ...(pending?.message ? ([['Message', pending.message]] as [string, string][]) : []),
+          ['Recognition', pending?.recognize ? pending.displayName || pending.name ? `Yes — as ${pending.displayName || pending.name}` : 'Yes' : 'No'],
+          ...(pending?.photo ? ([['Photo / logo', `${pending.photo.filename} (attached)`]] as [string, string][]) : []),
+        ]}
+        note={
+          <>
+            Your note goes to {eventConfig.organizer}
+            {sendsCopy && pending?.email ? (
+              <>
+                , and a thank-you copy will be emailed to <strong>{pending.email}</strong>
+              </>
+            ) : null}
+            . No money is moved by this website — {gcashReady ? 'complete your GCash transfer separately.' : 'the organizer will reply with transfer instructions.'}
+          </>
+        }
+        confirmLabel="Yes, send note"
+        sending={sending}
+        onConfirm={() => pending && sendGift(pending)}
+        onCancel={() => setPending(null)}
+      />
     </div>
   )
 }

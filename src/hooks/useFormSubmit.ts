@@ -7,17 +7,22 @@ import type { FormDataMap, FormType, SubmitResponse } from '../shared/forms'
  * Optimistically true while loading or when the backend can't be reached; the server still rejects if disabled.
  */
 export function useFormEnabled(type: FormType): boolean {
-  const [enabled, setEnabled] = useState(true)
+  return useFormStatus(type).enabled
+}
+
+/** `sendsCopy` mirrors the admin "Send copy to visitor" toggle so confirmations don't promise a copy that won't come. */
+export function useFormStatus(type: FormType): { enabled: boolean; sendsCopy: boolean } {
+  const [status, setStatus] = useState({ enabled: true, sendsCopy: true })
   useEffect(() => {
     let alive = true
     loadPublicConfig().then((config) => {
-      if (alive && config) setEnabled(config.forms[type])
+      if (alive && config) setStatus({ enabled: config.forms[type], sendsCopy: config.copies?.[type] ?? true })
     })
     return () => {
       alive = false
     }
   }, [type])
-  return enabled
+  return status
 }
 
 /** Sending state plus the honeypot/timing guard the send-form function expects. */

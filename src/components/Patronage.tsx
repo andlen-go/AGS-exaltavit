@@ -5,10 +5,11 @@ import {
   isGCashReady,
   isProgressReady,
 } from '../config/event'
-import { useFormEnabled, useFormSubmit } from '../hooks/useFormSubmit'
+import { useFormEnabled, useFormStatus, useFormSubmit } from '../hooks/useFormSubmit'
 import { useSupportDrawer } from '../hooks/useSupportDrawer'
 import { copyText } from '../lib/clipboard'
 import { isValidEmail, isValidMobile, type PartnerData } from '../shared/forms'
+import { ConfirmSendDialog } from './ConfirmSendDialog'
 import { HoneypotField, SubmitButton } from './MediaPlaceholder'
 import { Button, Collapse, Field, Input, LineIcon, Notice, Section, Select, Textarea, type IconName } from './ui'
 
@@ -25,8 +26,9 @@ export function Patronage() {
   const gcashReady = isGCashReady()
   const progressReady = isProgressReady()
   const giftReady = useFormEnabled('gift')
-  const partnerReady = useFormEnabled('partner')
+  const { enabled: partnerReady, sendsCopy } = useFormStatus('partner')
   const { submit, sending, honeypotProps } = useFormSubmit('partner')
+  const [pending, setPending] = useState<PartnerData | null>(null)
   const { openDrawer } = useSupportDrawer()
 
   const [partnerOpen, setPartnerOpen] = useState(false)
@@ -65,12 +67,16 @@ export function Patronage() {
     }
   }
 
-  async function sendPartner() {
+  function reviewPartner() {
     setPartnerError(null)
     setPartnerStatus(null)
     const partner = buildPartner()
-    if (!partner) return
+    if (partner) setPending(partner)
+  }
+
+  async function sendPartner(partner: PartnerData) {
     const result = await submit(partner)
+    setPending(null)
     if (!result.ok) {
       setPartnerError(result.error)
       return
@@ -274,12 +280,36 @@ export function Patronage() {
               </label>
               {partnerError ? <Notice tone="warn">{partnerError}</Notice> : null}
               {partnerStatus ? <Notice tone="success">{partnerStatus}</Notice> : null}
-              <SubmitButton onClick={sendPartner} sending={sending} label="Send inquiry" />
+              <SubmitButton onClick={reviewPartner} sending={sending} label="Send inquiry" />
             </div>
             </Collapse>
           </>
         ) : null}
       </div>
+      <ConfirmSendDialog
+        open={pending !== null}
+        title="Send your partnership inquiry?"
+        rows={[
+          ['Name', pending?.name ?? ''],
+          ['Email', pending?.email ?? ''],
+          ...(pending?.mobile ? ([['Mobile', pending.mobile]] as [string, string][]) : []),
+          ['Support type', pending?.kind === 'in-kind' ? 'In-kind' : 'Cash'],
+          ['Category', eventConfig.sponsorOpportunities.find((item) => item.id === pending?.category)?.title ?? ''],
+          ['Recognition', pending?.recognize ? 'Yes, if the partnership proceeds' : 'No'],
+          ['Proposal', pending?.proposal ?? ''],
+        ]}
+        note={
+          <>
+            Your inquiry goes to {eventConfig.organizer}
+            {sendsCopy ? <>, and a copy will be emailed to <strong>{pending?.email}</strong></> : null}. The organizer
+            will reply personally.
+          </>
+        }
+        confirmLabel="Yes, send inquiry"
+        sending={sending}
+        onConfirm={() => pending && sendPartner(pending)}
+        onCancel={() => setPending(null)}
+      />
     </Section>
   )
 }

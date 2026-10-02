@@ -69,7 +69,7 @@ export function SubmitButton({
 /** Off-screen field that humans never see; bots that fill it are silently ignored by the server. */
 export function HoneypotField(props: { value: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <div aria-hidden="true" className="sr-only">
+    <div aria-hidden="true" className="relative h-0 w-0 overflow-hidden">
       <label>
         Company website
         <input type="text" name="company_website" tabIndex={-1} autoComplete="off" {...props} />
